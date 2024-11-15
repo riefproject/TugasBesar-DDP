@@ -1,0 +1,58 @@
+# Build directories
+/build/
+/bin/
+
+# VSCode settings
+.vscode/
+
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+
+# Database files
+/db/admin/*
+/db/users/*
+!/db/admin/.gitkeep
+!/db/users/.gitkeep
+
+# Log files
+/log/*
+!/log/.gitkeep
+
+# Test directory
+/tests/*
+!/tests/.gitkeep
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Temporary files
+*.tmp
+*.temp
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+/lib/*
+!/lib/.gitkeep
+
+# Keep empty directories
+!/build/.gitkeep
+!/bin/.gitkeep
