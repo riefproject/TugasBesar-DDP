@@ -49,10 +49,6 @@ Makefile
 .DS_Store
 Thumbs.db
 
-# Dependencies
-/lib/*
-!/lib/.gitkeep
-
 # Keep empty directories
 !/build/.gitkeep
 !/bin/.gitkeep
