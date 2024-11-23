@@ -15,11 +15,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Sumber kode
 set(SOURCES
     src/main.c
-
-    # src/admin.c
-    # src/user.c
-    lib/auth.c
-    lib/security.c
+    lib/user.c
+    lib/db.c
 )
 
 # Buat executable
