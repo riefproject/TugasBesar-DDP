@@ -15,7 +15,11 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Sumber kode
 set(SOURCES
     src/main.c
+    
+    lib/menu.c
+    lib/security.c
     lib/user.c
+    lib/auth.c
     lib/db.c
 )
 

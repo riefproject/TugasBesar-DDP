@@ -1,86 +1,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "user.h"
-#include "db.h"
+#include <conio.h>
 
+#include "user.h"
+#include "auth.h"
+#include "menu.h"
+
+// Fungsi utama
 int main()
 {
-    // User *user = newUser();
+    User *user = NULL;
+    char *menu[10]; // Pastikan cukup besar untuk menyimpan semua menu
+    int menuCount = 0;
+    int selection = -1;
+    char menuMessage[512] = "Selamat datang di aplikasi bioskop";
 
-    // User userData = {
-    //     "ini adalah username",
-    //     "ini adalah password",
-    //     "ini adalah nama",
-    //     "ini adlaah email",
-    //     "ini adalah no telp",
-    //     ADMIN,
-    // };
+    while (1)
+    {
+        if (user)
+        {
+            char *newMenu[] = {
+                "Tiket ku",
+                "Pesan Tiket",
+                "Profil",
+                "Logout",
+            };
 
-    // user->create(userData);
+            menuCount = 4;
+            sprintf(menuMessage, "Hallo, %s", user->name);
+            setMenu(menu, newMenu, menuCount);
 
-    const char *filename = "db/users.csv"; 
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", filename);
-        return 1;  // Return 1 to indicate error
+            selection = showMenu(menu, menuCount, menuMessage);
+
+            switch (selection)
+            {
+            case 1:
+                printf("Tiket ku\n");
+                break;
+            case 2:
+                printf("Pesan Tiket\n");
+                break;
+            case 3:
+                printf("Profil\n");
+                break;
+            case 4:
+                printf("Logout berhasil!\n");
+                free(user);
+                user = NULL;
+                break;
+            default:
+                printf("Pilihan tidak valid.\n");
+            }
+        }
+        else
+        {
+            // Menu untuk user yang belum login
+            char *newMenu[] = {
+                "Login",
+                "Register",
+                "Keluar",
+            };
+
+            menuCount = 3;
+            strcpy(menuMessage, "Selamat datang di aplikasi bioskop");
+            setMenu(menu, newMenu, menuCount);
+
+            selection = showMenu(menu, menuCount, menuMessage);
+
+            switch (selection)
+            {
+            case 1:
+                user = newUser();
+                loginUser(user);
+                break;
+            case 2:
+                registerUser();
+                break;
+            case 3:
+                printf("Selamat tinggal.\n");
+                exit(0);
+            default:
+                printf("Pilihan tidak valid. Coba lagi.\n");
+            }
+        }
     }
 
-    User user;
-    int line_count = 0;
-
-    // Read file using fscanf
-    while (fscanf(file, "%d,%[^,],%[^,],%[^,],%[^,],%[^,],%d\n",
-                  &user.id,  // Note: no & needed when printing
-                  user.username,
-                  user.password,
-                  user.name,
-                  user.email,
-                  user.notelp,
-                  &user.role) == 7) {
-        
-        line_count++;
-        
-        printf("\nUser #%d:\n", line_count);
-        printf("ID: %d\n", user.id); 
-        printf("Username: %s\n", user.username);
-        printf("Password: %s\n", user.password);
-        printf("Name: %s\n", user.name);
-        printf("Email: %s\n", user.email);
-        printf("Phone: %s\n", user.notelp);
-        printf("------------------------\n");
-    }
-
-    fclose(file);
-    return 0;  // Successfully completed
-
-    // User user;
-    // int pilihan;
-
-    // while (1)
-    // {
-    //     tampilkanMenu();
-    //     printf("Pilih menu: ");
-    //     scanf("%d", &pilihan);
-    //     getchar(); // untuk menghapus newline setelah input
-
-    //     switch (pilihan)
-    //     {
-    //     case 1:
-    //         // authAdmin();
-    //         break;
-    //     case 2:
-    //         authUser(&user);
-    //         break;
-    //     case 3:
-    //         addUser();
-    //         break;
-    //     case 4:
-    //         printf("Keluar dari program.\n");
-    //         exit(0);
-    //     default:
-    //         printf("Pilihan tidak valid. Coba lagi.\n");
-    //     }
-    // }
-    // return 0;
+    return 0;
 }

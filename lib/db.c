@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "db.h"
 
 int getlastAvalibleID(char *databaseName)
@@ -5,7 +9,9 @@ int getlastAvalibleID(char *databaseName)
     int count = 0;
     char c;
 
-    FILE *file = fopen(database(databaseName), "r");
+    char *path = database(databaseName);
+    FILE *file = fopen(path, "r");
+    free(path);
 
     while ((c = fgetc(file)) != EOF)
     {
@@ -15,21 +21,20 @@ int getlastAvalibleID(char *databaseName)
         }
     }
 
-    fseek(file, -1, SEEK_END);
-
-    if (fgetc(file) != '\n')
-    {
-        count++;
-    }
-
-    return count;
+    return count + 1;
 }
 
 char *database(char *databaseName)
 {
-    char *path = "";
+    size_t length = strlen(DATABASE_PATH) + strlen(databaseName) + 2;
+    char *path = malloc(length);
+
+    if (!path)
+    {
+        fprintf(stderr, "Memory allocation failed!\n");
+        exit(0);
+    }
 
     sprintf(path, "%s/%s", DATABASE_PATH, databaseName);
-
     return path;
 }
