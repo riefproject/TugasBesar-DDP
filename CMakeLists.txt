@@ -15,12 +15,17 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Sumber kode
 set(SOURCES
     src/main.c
-    
+
+    lib/auth.c
+    lib/bioskop.c
+    lib/db.c
+    lib/display.c
+    lib/film.c
+    lib/kota.c
     lib/menu.c
     lib/security.c
+    lib/studio.c
     lib/user.c
-    lib/auth.c
-    lib/db.c
 )
 
 # Buat executable
