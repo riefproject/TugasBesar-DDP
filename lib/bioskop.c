@@ -48,172 +48,127 @@ void setBioskopNama(Bioskop *bioskop, const char *nama)
     strncpy(bioskop->nama, nama, MAX_BIOSKOP_NAME - 1);
     bioskop->nama[MAX_BIOSKOP_NAME - 1] = '\0';
 }
-void setBioskopManager(Bioskop *bioskop, const char *manager)
-{
-    strncpy(bioskop->manager, manager, MAX_MANAGER_NAME - 1);
-    bioskop->manager[MAX_MANAGER_NAME - 1] = '\0';
-}
 
-// Validasi nama bioskop unik
-int isBioskopNamaUnique(const Bioskop bioskopList[], int count, const char *nama)
+int addBioskop()
 {
-    for (int i = 0; i < count; i++)
-    {
-        if (caseInsensitiveCompare(bioskopList[i].nama, nama))
-        {
-            return 0; // Nama bioskop sudah ada
-        }
-    }
-    return 1; // Nama bioskop unik
-}
-
-// Membaca data bioskop dari file CSV
-int loadBioskop(Bioskop bioskopList[], int *count)
-{
-    FILE *file = fopen(BIOSKOP_CSV_FILE, "r");
+    FILE *file = fopen(BIOSKOP_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
     if (!file)
     {
-        perror("Gagal membuka file");
-        return 0;
+        // Jika file tidak ada, buat file baru
+        file = fopen(BIOSKOP_CSV_FILE, "w+");
+        if (!file)
+        {
+            perror("Gagal membuka atau membuat file bioskop.");
+            return 0;
+        }
+        // Tulis header ke file baru
+        fprintf(file, "id,kota_id,nama,manager\n");
     }
 
     char line[256];
-    *count = 0;
+    int id = 0, kota_id;
+    char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
+    int isUnique = 1;
 
-    // Lewati header
+    // Skip header
     fgets(line, sizeof(line), file);
 
-    // Baca data
+    // Cek apakah nama sudah ada di file
     while (fgets(line, sizeof(line), file))
     {
-        int id, kota_id;
-        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
-        sscanf(line, "%d,%d,%49[^,],%49[^\n]", &id, &kota_id, nama, manager);
-        bioskopList[*count] = createBioskop(id, kota_id, nama, manager);
-        (*count)++;
-    }
-
-    fclose(file);
-    return 1;
-}
-
-// Menyimpan data bioskop ke file CSV
-int saveBioskop(const Bioskop bioskopList[], int count)
-{
-    FILE *file = fopen(BIOSKOP_CSV_FILE, "w");
-    if (!file)
-    {
-        perror("Gagal membuka file");
-        return 0;
-    }
-
-    fprintf(file, "id,kota_id,nama,manager\n");
-    for (int i = 0; i < count; i++)
-    {
-        fprintf(file, "%d,%d,%s,%s\n",
-                getBioskopId(&bioskopList[i]),
-                getBioskopKotaId(&bioskopList[i]),
-                getBioskopNama(&bioskopList[i]),
-                getBioskopManager(&bioskopList[i]));
-    }
-
-    fclose(file);
-    return 1;
-}
-
-// Menampilkan daftar bioskop
-void displayBioskop(const Bioskop bioskopList[], int count, const Kota kotaList[], int kotaCount)
-{
-    printf("\nDaftar Bioskop:\n");
-    printf("=======================================================\n");
-    printf("%-5s %-20s %-15s %-20s\n", "ID", "Nama", "Kota", "Manager");
-    printf("=======================================================\n");
-
-    for (int i = 0; i < count; i++)
-    {
-        const char *kotaNama = "Tidak Ditemukan";
-        for (int j = 0; j < kotaCount; j++)
+        int existingId;
+        char existingNama[MAX_BIOSKOP_NAME];
+        sscanf(line, "%d,%*d,%49[^,],%*s", &existingId, existingNama);
+        id = existingId; // Simpan ID terakhir
+        if (caseInsensitiveCompare(existingNama, nama))
         {
-            if (getKotaId(&kotaList[j]) == getBioskopKotaId(&bioskopList[i]))
-            {
-                kotaNama = getKotaNama(&kotaList[j]);
-                break;
-            }
+            isUnique = 0;
+            break;
         }
-        printf("%-5d %-20s %-15s %-20s\n",
-               getBioskopId(&bioskopList[i]),
-               getBioskopNama(&bioskopList[i]),
-               kotaNama,
-               getBioskopManager(&bioskopList[i]));
-    }
-    printf("=======================================================\n");
-}
-
-// Menambah bioskop baru
-int addBioskop(Bioskop bioskopList[], int *count, int kota_id, const char *nama, const char *manager)
-{
-    if (*count >= MAX_BIOSKOP)
-    {
-        printf("Gagal menambah bioskop: kapasitas penuh.\n");
-        return 0;
     }
 
-    if (!isBioskopNamaUnique(bioskopList, *count, nama))
+    if (!isUnique)
     {
         printf("Gagal menambah bioskop: nama bioskop '%s' sudah ada.\n", nama);
+        fclose(file);
         return 0;
     }
 
-    int newId = *count > 0 ? getBioskopId(&bioskopList[*count - 1]) + 1 : 1;
+    // Ambil input dari admin
+    printf("Masukkan ID Kota: ");
+    scanf("%d", &kota_id);
+    printf("Masukkan Nama Bioskop: ");
+    scanf(" %[^\n]", nama);
+    printf("Masukkan Nama Manager: ");
+    scanf(" %[^\n]", manager);
 
-    bioskopList[*count] = createBioskop(newId, kota_id, nama, manager);
-    (*count)++;
+    // Tambahkan bioskop baru
+    id++; // Increment ID terakhir
+    fprintf(file, "%d,%d,%s,%s\n", id, kota_id, nama, manager);
 
+    fclose(file);
+    printf("Bioskop '%s' berhasil ditambahkan dengan ID %d.\n", nama, id);
     return 1;
 }
 
 void displayBioskopFromFile()
 {
-    Bioskop bioskopList[MAX_BIOSKOP];
-    Kota kotaList[MAX_KOTA];
-    int bioskopCount = 0, kotaCount = 0;
+    FILE *bioskopFile = fopen(BIOSKOP_CSV_FILE, "r");
+    FILE *kotaFile = fopen(KOTA_CSV_FILE, "r");
 
-    // Load data kota
-    if (!loadKota(kotaList, &kotaCount))
+    if (!bioskopFile)
     {
-        printf("Gagal memuat data kota.\n");
+        printf("File bioskop.csv tidak ditemukan.\n");
+        return;
+    }
+    if (!kotaFile)
+    {
+        printf("File kota.csv tidak ditemukan.\n");
+        fclose(bioskopFile);
         return;
     }
 
-    // Load data bioskop
-    if (!loadBioskop(bioskopList, &bioskopCount))
-    {
-        printf("Gagal memuat data bioskop.\n");
-        return;
-    }
-
-    // Tampilkan daftar bioskop
+    char bioskopLine[256], kotaLine[256];
     printf("\nDaftar Bioskop:\n");
     printf("===================================================\n");
     printf("%-5s %-20s %-15s %-20s\n", "ID", "Nama", "Kota", "Manager");
     printf("===================================================\n");
 
-    for (int i = 0; i < bioskopCount; i++)
+    // Lewati header kota
+    fgets(kotaLine, sizeof(kotaLine), kotaFile);
+
+    // Lewati header bioskop
+    fgets(bioskopLine, sizeof(bioskopLine), bioskopFile);
+
+    // Tampilkan data bioskop
+    while (fgets(bioskopLine, sizeof(bioskopLine), bioskopFile))
     {
-        const char *kotaNama = "Tidak Ditemukan";
-        for (int j = 0; j < kotaCount; j++)
+        int id, kota_id;
+        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
+        char kotaNama[MAX_NAME_KOTA_LENGTH] = "Tidak Ditemukan";
+
+        sscanf(bioskopLine, "%d,%d,%49[^,],%49[^\n]", &id, &kota_id, nama, manager);
+
+        // Cari nama kota berdasarkan kota_id
+        rewind(kotaFile);                            // Kembali ke awal file kota
+        fgets(kotaLine, sizeof(kotaLine), kotaFile); // Lewati header
+        while (fgets(kotaLine, sizeof(kotaLine), kotaFile))
         {
-            if (getKotaId(&kotaList[j]) == getBioskopKotaId(&bioskopList[i]))
+            int kotaId;
+            char namaKota[MAX_NAME_KOTA_LENGTH];
+            sscanf(kotaLine, "%d,%49[^\n]", &kotaId, namaKota);
+            if (kotaId == kota_id)
             {
-                kotaNama = getKotaNama(&kotaList[j]);
+                strncpy(kotaNama, namaKota, MAX_NAME_KOTA_LENGTH);
                 break;
             }
         }
-        printf("%-5d %-20s %-15s %-20s\n",
-               getBioskopId(&bioskopList[i]),
-               getBioskopNama(&bioskopList[i]),
-               kotaNama,
-               getBioskopManager(&bioskopList[i]));
+
+        printf("%-5d %-20s %-15s %-20s\n", id, nama, kotaNama, manager);
     }
+
     printf("===================================================\n");
+
+    fclose(bioskopFile);
+    fclose(kotaFile);
 }

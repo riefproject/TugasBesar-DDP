@@ -55,160 +55,149 @@ void setStudioAdditionalFee(Studio *studio, float additional_fee)
     studio->additional_fee = additional_fee;
 }
 
-// Membaca data studio dari file CSV
-int loadStudio(Studio studioList[], int *count)
+int addStudio()
+{
+    FILE *file = fopen(STUDIO_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
+    if (!file)
+    {
+        // Jika file tidak ada, buat file baru
+        file = fopen(STUDIO_CSV_FILE, "w+");
+        if (!file)
+        {
+            perror("Gagal membuka atau membuat file studio.");
+            return 0;
+        }
+        // Tulis header ke file baru
+        fprintf(file, "id,bioskop_id,jumlah_kursi,additional_fee\n");
+    }
+
+    char line[256];
+    int id = 0, bioskop_id, jumlah_kursi;
+    float additional_fee;
+
+    // Skip header
+    fgets(line, sizeof(line), file);
+
+    // Cari ID terakhir
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        sscanf(line, "%d,%*d,%*d,%*f", &existingId);
+        id = existingId; // Simpan ID terakhir
+    }
+
+    // Ambil input dari admin
+    printf("Masukkan ID Bioskop: ");
+    scanf("%d", &bioskop_id);
+    printf("Masukkan Jumlah Kursi: ");
+    scanf("%d", &jumlah_kursi);
+    printf("Masukkan Biaya Tambahan: ");
+    scanf("%f", &additional_fee);
+
+    // Tambahkan studio baru
+    id++; // Increment ID terakhir
+    fprintf(file, "%d,%d,%d,%.2f\n", id, bioskop_id, jumlah_kursi, additional_fee);
+
+    fclose(file);
+    printf("Studio berhasil ditambahkan dengan ID %d.\n", id);
+    return 1;
+}
+
+void findStudioById(int id)
 {
     FILE *file = fopen(STUDIO_CSV_FILE, "r");
     if (!file)
     {
-        perror("Gagal membuka file");
-        return 0;
+        printf("File studio.csv tidak ditemukan.\n");
+        return;
     }
 
     char line[256];
-    *count = 0;
-
-    // Lewati header
+    // Skip header
     fgets(line, sizeof(line), file);
 
-    // Baca data
+    // Cari studio berdasarkan ID
     while (fgets(line, sizeof(line), file))
     {
-        int id, bioskop_id, jumlah_kursi;
+        int existingId, bioskop_id, jumlah_kursi;
         float additional_fee;
-        sscanf(line, "%d,%d,%d,%f", &id, &bioskop_id, &jumlah_kursi, &additional_fee);
-        studioList[*count] = createStudio(id, bioskop_id, jumlah_kursi, additional_fee);
-        (*count)++;
-    }
 
-    fclose(file);
-    return 1;
-}
+        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskop_id, &jumlah_kursi, &additional_fee);
 
-// Menyimpan data studio ke file CSV
-int saveStudio(const Studio studioList[], int count)
-{
-    FILE *file = fopen(STUDIO_CSV_FILE, "w");
-    if (!file)
-    {
-        perror("Gagal membuka file");
-        return 0;
-    }
-
-    fprintf(file, "id,bioskop_id,jumlah_kursi,additional_fee\n");
-    for (int i = 0; i < count; i++)
-    {
-        fprintf(file, "%d,%d,%d,%.2f\n",
-                getStudioId(&studioList[i]),
-                getStudioBioskopId(&studioList[i]),
-                getStudioJumlahKursi(&studioList[i]),
-                getStudioAdditionalFee(&studioList[i]));
-    }
-
-    fclose(file);
-    return 1;
-}
-
-// Menampilkan daftar studio
-void displayStudio(const Studio studioList[], int count, const Bioskop bioskopList[], int bioskopCount)
-{
-    printf("\nDaftar Studio:\n");
-    printf("=====================================================\n");
-    printf("%-5s %-20s %-15s %-15s\n", "ID", "Bioskop", "Jumlah Kursi", "Additional Fee");
-    printf("=====================================================\n");
-
-    for (int i = 0; i < count; i++)
-    {
-        const char *bioskopNama = "Tidak Ditemukan";
-        for (int j = 0; j < bioskopCount; j++)
+        if (existingId == id)
         {
-            if (getBioskopId(&bioskopList[j]) == getStudioBioskopId(&studioList[i]))
-            {
-                bioskopNama = getBioskopNama(&bioskopList[j]);
-                break;
-            }
-        }
-        printf("%-5d %-20s %-15d %-15.2f\n",
-               getStudioId(&studioList[i]),
-               bioskopNama,
-               getStudioJumlahKursi(&studioList[i]),
-               getStudioAdditionalFee(&studioList[i]));
-    }
-    printf("=====================================================\n");
-}
-
-// Menambah studio baru
-int addStudio(Studio studioList[], int *count, int bioskop_id, int jumlah_kursi, float additional_fee)
-{
-    if (*count >= MAX_STUDIO)
-    {
-        printf("Gagal menambah studio: kapasitas penuh.\n");
-        return 0;
-    }
-
-    int newId = *count > 0 ? getStudioId(&studioList[*count - 1]) + 1 : 1;
-
-    studioList[*count] = createStudio(newId, bioskop_id, jumlah_kursi, additional_fee);
-    (*count)++;
-
-    return 1;
-}
-
-// Mencari studio berdasarkan ID
-Studio *findStudioById(const Studio studioList[], int count, int id)
-{
-    for (int i = 0; i < count; i++)
-    {
-        if (getStudioId(&studioList[i]) == id)
-        {
-            return &studioList[i];
+            printf("Studio ditemukan:\n");
+            printf("ID: %d\n", existingId);
+            printf("Bioskop ID: %d\n", bioskop_id);
+            printf("Jumlah Kursi: %d\n", jumlah_kursi);
+            printf("Biaya Tambahan: %.2f\n", additional_fee);
+            fclose(file);
+            return;
         }
     }
-    return NULL;
+
+    printf("Studio dengan ID %d tidak ditemukan.\n", id);
+    fclose(file);
 }
 
 void displayStudioFromFile()
 {
-    Studio studioList[MAX_STUDIO];
-    Bioskop bioskopList[MAX_BIOSKOP];
-    int studioCount = 0, bioskopCount = 0;
+    FILE *studioFile = fopen(STUDIO_CSV_FILE, "r");
+    FILE *bioskopFile = fopen(BIOSKOP_CSV_FILE, "r");
 
-    // Load data bioskop
-    if (!loadBioskop(bioskopList, &bioskopCount))
+    if (!studioFile)
     {
-        printf("Gagal memuat data bioskop.\n");
+        printf("File studio.csv tidak ditemukan.\n");
+        return;
+    }
+    if (!bioskopFile)
+    {
+        printf("File bioskop.csv tidak ditemukan.\n");
+        fclose(studioFile);
         return;
     }
 
-    // Load data studio
-    if (!loadStudio(studioList, &studioCount))
-    {
-        printf("Gagal memuat data studio.\n");
-        return;
-    }
-
-    // Tampilkan daftar studio
+    char studioLine[256], bioskopLine[256];
     printf("\nDaftar Studio:\n");
     printf("=====================================================\n");
     printf("%-5s %-20s %-15s %-15s\n", "ID", "Bioskop", "Jumlah Kursi", "Additional Fee");
     printf("=====================================================\n");
 
-    for (int i = 0; i < studioCount; i++)
+    // Lewati header bioskop
+    fgets(bioskopLine, sizeof(bioskopLine), bioskopFile);
+
+    // Lewati header studio
+    fgets(studioLine, sizeof(studioLine), studioFile);
+
+    // Tampilkan data studio
+    while (fgets(studioLine, sizeof(studioLine), studioFile))
     {
-        const char *bioskopNama = "Tidak Ditemukan";
-        for (int j = 0; j < bioskopCount; j++)
+        int id, bioskop_id, jumlah_kursi;
+        float additional_fee;
+        char bioskopNama[MAX_BIOSKOP_NAME] = "Tidak Ditemukan";
+
+        sscanf(studioLine, "%d,%d,%d,%f", &id, &bioskop_id, &jumlah_kursi, &additional_fee);
+
+        // Cari nama bioskop berdasarkan bioskop_id
+        rewind(bioskopFile);                                  // Kembali ke awal file bioskop
+        fgets(bioskopLine, sizeof(bioskopLine), bioskopFile); // Lewati header
+        while (fgets(bioskopLine, sizeof(bioskopLine), bioskopFile))
         {
-            if (getBioskopId(&bioskopList[j]) == getStudioBioskopId(&studioList[i]))
+            int existingBioskopId;
+            char namaBioskop[MAX_BIOSKOP_NAME];
+            sscanf(bioskopLine, "%d,%*d,%49[^,],%*s", &existingBioskopId, namaBioskop);
+            if (existingBioskopId == bioskop_id)
             {
-                bioskopNama = getBioskopNama(&bioskopList[j]);
+                strncpy(bioskopNama, namaBioskop, MAX_BIOSKOP_NAME);
                 break;
             }
         }
-        printf("%-5d %-20s %-15d %-15.2f\n",
-               getStudioId(&studioList[i]),
-               bioskopNama,
-               getStudioJumlahKursi(&studioList[i]),
-               getStudioAdditionalFee(&studioList[i]));
+
+        printf("%-5d %-20s %-15d %-15.2f\n", id, bioskopNama, jumlah_kursi, additional_fee);
     }
+
     printf("=====================================================\n");
+
+    fclose(studioFile);
+    fclose(bioskopFile);
 }

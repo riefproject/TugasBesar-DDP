@@ -6,7 +6,7 @@
 #define MAX_FILM_TITLE 100
 #define MAX_GENRE 50
 #define MAX_FILM 100
-#define FILM_CSV_FILE "film.csv" // Nama file statis untuk film
+#define FILM_CSV_FILE "db/film.csv" // Nama file statis untuk film
 
 typedef struct
 {
@@ -40,19 +40,10 @@ void setFilmGenre(Film *film, const char *genre);
 void setFilmDurasi(Film *film, int durasi);
 void setFilmTersedia(Film *film, int tersedia);
 
-// Fungsi untuk membaca data film dari file CSV
-int loadFilm(Film filmList[], int *count);
-
-// Fungsi untuk menyimpan data film ke file CSV
-int saveFilm(const Film filmList[], int count);
-
-// Fungsi untuk menampilkan daftar film
-void displayFilm(const Film filmList[], int count, const Bioskop bioskopList[], int bioskopCount);
-
 // Prosedur untuk menampilkan daftar film langsung dari file
 void displayFilmFromFile();
 
 // Fungsi untuk menambah film baru
-int addFilm(Film filmList[], int *count, int bioskop_id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
+int addFilm();
 
 #endif

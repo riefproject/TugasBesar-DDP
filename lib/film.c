@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "film.h"
-
 // Constructor
 Film createFilm(int id, int bioskop_id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia)
 {
@@ -49,123 +48,162 @@ void setFilmGenre(Film *film, const char *genre)
 void setFilmDurasi(Film *film, int durasi) { film->durasi = durasi; }
 void setFilmTersedia(Film *film, int tersedia) { film->tersedia = tersedia; }
 
-// Membaca data film dari file CSV
-int loadFilm(Film filmList[], int *count)
+// Prosedur untuk menampilkan daftar film langsung dari file
+void displayFilmFromFile()
 {
-    FILE *file = fopen(FILM_CSV_FILE, "r");
-    if (!file)
+    FILE *filmFile = fopen(FILM_CSV_FILE, "r");
+    FILE *bioskopFile = fopen(BIOSKOP_CSV_FILE, "r");
+
+    if (!filmFile)
     {
-        perror("Gagal membuka file");
-        return 0;
+        printf("File film.csv tidak ditemukan.\n");
+        return;
+    }
+    if (!bioskopFile)
+    {
+        printf("File bioskop.csv tidak ditemukan.\n");
+        fclose(filmFile);
+        return;
     }
 
-    char line[256];
-    *count = 0;
-
-    // Lewati header
-    fgets(line, sizeof(line), file);
-
-    // Baca data
-    while (fgets(line, sizeof(line), file))
-    {
-        int id, bioskop_id, durasi, tersedia;
-        char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
-        sscanf(line, "%d,%d,%9[^,],%99[^,],%49[^,],%d,%d", &id, &bioskop_id, kode_film, judul, genre, &durasi, &tersedia);
-        filmList[*count] = createFilm(id, bioskop_id, kode_film, judul, genre, durasi, tersedia);
-        (*count)++;
-    }
-
-    fclose(file);
-    return 1;
-}
-
-// Menyimpan data film ke file CSV
-int saveFilm(const Film filmList[], int count)
-{
-    FILE *file = fopen(FILM_CSV_FILE, "w");
-    if (!file)
-    {
-        perror("Gagal membuka file");
-        return 0;
-    }
-
-    fprintf(file, "id,bioskop_id,kode_film,judul,genre,durasi,tersedia\n");
-    for (int i = 0; i < count; i++)
-    {
-        fprintf(file, "%d,%d,%s,%s,%s,%d,%d\n",
-                getFilmId(&filmList[i]),
-                getFilmBioskopId(&filmList[i]),
-                getFilmKode(&filmList[i]),
-                getFilmJudul(&filmList[i]),
-                getFilmGenre(&filmList[i]),
-                getFilmDurasi(&filmList[i]),
-                isFilmTersedia(&filmList[i]));
-    }
-
-    fclose(file);
-    return 1;
-}
-
-// Menampilkan daftar film
-void displayFilm(const Film filmList[], int count, const Bioskop bioskopList[], int bioskopCount)
-{
+    char filmLine[256], bioskopLine[256];
     printf("\nDaftar Film:\n");
     printf("===============================================================\n");
     printf("%-5s %-20s %-15s %-15s %-10s\n", "ID", "Judul", "Bioskop", "Genre", "Durasi");
     printf("===============================================================\n");
 
-    for (int i = 0; i < count; i++)
+    // Lewati header bioskop
+    fgets(bioskopLine, sizeof(bioskopLine), bioskopFile);
+
+    // Lewati header film
+    fgets(filmLine, sizeof(filmLine), filmFile);
+
+    // Tampilkan data film
+    while (fgets(filmLine, sizeof(filmLine), filmFile))
     {
-        const char *bioskopNama = "Tidak Ditemukan";
-        for (int j = 0; j < bioskopCount; j++)
+        int id, bioskop_id, durasi, tersedia;
+        char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+        char bioskopNama[MAX_BIOSKOP_NAME] = "Tidak Ditemukan";
+
+        sscanf(filmLine, "%d,%d,%9[^,],%99[^,],%49[^,],%d,%d",
+               &id, &bioskop_id, kode_film, judul, genre, &durasi, &tersedia);
+
+        // Cari nama bioskop berdasarkan bioskop_id
+        rewind(bioskopFile);                                  // Kembali ke awal file bioskop
+        fgets(bioskopLine, sizeof(bioskopLine), bioskopFile); // Lewati header
+        while (fgets(bioskopLine, sizeof(bioskopLine), bioskopFile))
         {
-            if (getBioskopId(&bioskopList[j]) == getFilmBioskopId(&filmList[i]))
+            int existingBioskopId;
+            char namaBioskop[MAX_BIOSKOP_NAME];
+            sscanf(bioskopLine, "%d,%*d,%49[^,],%*s", &existingBioskopId, namaBioskop);
+            if (existingBioskopId == bioskop_id)
             {
-                bioskopNama = getBioskopNama(&bioskopList[j]);
+                strncpy(bioskopNama, namaBioskop, MAX_BIOSKOP_NAME);
                 break;
             }
         }
-        printf("%-5d %-20s %-15s %-15s %-10d\n",
-               getFilmId(&filmList[i]),
-               getFilmJudul(&filmList[i]),
-               bioskopNama,
-               getFilmGenre(&filmList[i]),
-               getFilmDurasi(&filmList[i]));
+
+        printf("%-5d %-20s %-15s %-15s %-10d\n", id, judul, bioskopNama, genre, durasi);
     }
+
     printf("===============================================================\n");
+
+    fclose(filmFile);
+    fclose(bioskopFile);
 }
 
-// Prosedur untuk menampilkan daftar film langsung dari file
-void displayFilmFromFile()
+void findFilmById(int id)
 {
-    Film filmList[MAX_FILM];
-    Bioskop bioskopList[MAX_BIOSKOP];
-    int filmCount = 0, bioskopCount = 0;
-
-    // Load data bioskop
-    if (!loadBioskop(bioskopList, &bioskopCount))
+    FILE *file = fopen(FILM_CSV_FILE, "r");
+    if (!file)
     {
-        printf("Gagal memuat data bioskop.\n");
+        printf("File film.csv tidak ditemukan.\n");
         return;
     }
 
-    // Load data film
-    if (!loadFilm(filmList, &filmCount))
+    char line[256];
+    // Lewati header
+    fgets(line, sizeof(line), file);
+
+    // Cari film berdasarkan ID
+    while (fgets(line, sizeof(line), file))
     {
-        printf("Gagal memuat data film.\n");
-        return;
+        int existingId, bioskop_id, durasi, tersedia;
+        char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+
+        sscanf(line, "%d,%d,%9[^,],%99[^,],%49[^,],%d,%d",
+               &existingId, &bioskop_id, kode_film, judul, genre, &durasi, &tersedia);
+
+        if (existingId == id)
+        {
+            printf("Film ditemukan:\n");
+            printf("ID: %d\n", existingId);
+            printf("Bioskop ID: %d\n", bioskop_id);
+            printf("Kode Film: %s\n", kode_film);
+            printf("Judul: %s\n", judul);
+            printf("Genre: %s\n", genre);
+            printf("Durasi: %d menit\n", durasi);
+            printf("Tersedia: %s\n", tersedia ? "Ya" : "Tidak");
+            fclose(file);
+            return;
+        }
     }
 
-    // Tampilkan daftar film
-    displayFilm(filmList, filmCount, bioskopList, bioskopCount);
+    printf("Film dengan ID %d tidak ditemukan.\n", id);
+    fclose(file);
 }
 
 // Menambah film baru
-int addFilm(Film filmList[], int *count, int bioskop_id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia)
+int addFilm()
 {
-    if (*count >= MAX_FILM)
+    FILE *file = fopen(FILM_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
+    if (!file)
     {
-        printf("Gagal menambah film: kapasitas penuh.\n");
-        return 0;
+        // Jika file tidak ada, buat file baru
+        file = fopen(FILM_CSV_FILE, "w+");
+        if (!file)
+        {
+            perror("Gagal membuka atau membuat file film.");
+            return 0;
+        }
+        // Tulis header ke file baru
+        fprintf(file, "id,bioskop_id,kode_film,judul,genre,durasi,tersedia\n");
     }
+
+    char line[256];
+    int id = 0, bioskop_id, durasi, tersedia;
+    char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+
+    // Skip header
+    fgets(line, sizeof(line), file);
+
+    // Cari ID terakhir
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        sscanf(line, "%d,%*d,%*[^,],%*[^,],%*[^,],%*d,%*d", &existingId);
+        id = existingId; // Simpan ID terakhir
+    }
+
+    // Ambil input dari admin
+    printf("Masukkan ID Bioskop: ");
+    scanf("%d", &bioskop_id);
+    printf("Masukkan Kode Film: ");
+    scanf("%s", kode_film);
+    printf("Masukkan Judul Film: ");
+    scanf(" %[^\n]", judul);
+    printf("Masukkan Genre Film: ");
+    scanf("%s", genre);
+    printf("Masukkan Durasi Film (menit): ");
+    scanf("%d", &durasi);
+    printf("Film Tersedia? (1: Ya, 0: Tidak): ");
+    scanf("%d", &tersedia);
+
+    // Tambahkan film baru
+    id++; // Increment ID terakhir
+    fprintf(file, "%d,%d,%s,%s,%s,%d,%d\n", id, bioskop_id, kode_film, judul, genre, durasi, tersedia);
+
+    fclose(file);
+    printf("Film '%s' berhasil ditambahkan dengan ID %d.\n", judul, id);
+    return 1;
 }

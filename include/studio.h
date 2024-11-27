@@ -4,7 +4,7 @@
 #include "bioskop.h"
 
 #define MAX_STUDIO 100
-#define STUDIO_CSV_FILE "studio.csv"
+#define STUDIO_CSV_FILE "db/studio.csv"
 
 typedef struct
 {
@@ -29,22 +29,13 @@ void setStudioBioskopId(Studio *studio, int bioskop_id);
 void setStudioJumlahKursi(Studio *studio, int jumlah_kursi);
 void setStudioAdditionalFee(Studio *studio, float additional_fee);
 
-// Fungsi untuk membaca data studio dari file CSV
-int loadStudio(Studio studioList[], int *count);
-
-// Fungsi untuk menyimpan data studio ke file CSV
-int saveStudio(const Studio studioList[], int count);
-
-// Fungsi untuk menampilkan daftar studio
-void displayStudio(const Studio studioList[], int count, const Bioskop bioskopList[], int bioskopCount);
+// Fungsi untuk menambahkan studio baru
+int addStudio();
 
 // Fungsi untuk mencari studio berdasarkan ID
-Studio *findStudioById(const Studio studioList[], int count, int id);
+void findStudioById(int id);
 
-// Fungsi untuk menambah studio baru
-int addStudio(Studio studioList[], int *count, int bioskop_id, int jumlah_kursi, float additional_fee);
-
-// Fungsi untuk menampilkan daftar studio dari db
+// Fungsi untuk menampilkan daftar studio dari file
 void displayStudioFromFile();
 
 #endif

@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "kota.h"
-#include "bioskop.h"
-#include "studio.h"
-#include "film.h"
+#include "all.h"
 
 // Fungsi login sederhana
 int loginAsAdmin()
@@ -57,44 +54,6 @@ void adminMenu()
         case 4:
             displayFilmFromFile();
             break;
-        case 5:
-        {
-            Film filmList[MAX_FILM];
-            int filmCount = 0;
-
-            if (!loadFilm(filmList, &filmCount))
-            {
-                printf("Gagal memuat data film.\n");
-                break;
-            }
-
-            int bioskop_id, durasi, tersedia;
-            char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
-
-            printf("Masukkan ID Bioskop: ");
-            scanf("%d", &bioskop_id);
-            printf("Masukkan Kode Film: ");
-            scanf("%s", kode_film);
-            printf("Masukkan Judul Film: ");
-            scanf(" %[^\n]", judul);
-            printf("Masukkan Genre Film: ");
-            scanf("%s", genre);
-            printf("Masukkan Durasi Film (menit): ");
-            scanf("%d", &durasi);
-            printf("Film Tersedia? (1: Ya, 0: Tidak): ");
-            scanf("%d", &tersedia);
-
-            if (addFilm(filmList, &filmCount, bioskop_id, kode_film, judul, genre, durasi, tersedia))
-            {
-                printf("Film berhasil ditambahkan.\n");
-                saveFilm(filmList, filmCount);
-            }
-            else
-            {
-                printf("Gagal menambahkan film.\n");
-            }
-            break;
-        }
         case 0:
             printf("Logout berhasil. Sampai jumpa!\n");
             break;

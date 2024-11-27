@@ -3,7 +3,7 @@
 
 #define MAX_NAME_KOTA_LENGTH 50
 #define MAX_KOTA 100
-#define KOTA_CSV_FILE "kota.csv"
+#define KOTA_CSV_FILE "db/kota.csv"
 
 typedef struct
 {
@@ -22,27 +22,19 @@ const char *getKotaNama(const Kota *kota);
 void setKotaId(Kota *kota, int id);
 void setKotaNama(Kota *kota, const char *nama);
 
-// Fungsi untuk membaca data kota dari file CSV
-int loadKota(Kota kotaList[], int *count);
+// Fungsi untuk menambahkan kota
+int addKota();
 
-// Fungsi untuk menampilkan daftar kota
-void displayKota(const Kota kotaList[], int count);
+// Fungsi untuk menampilkan daftar kota langsung dari file
+void displayKotaFromFile();
 
 // Fungsi untuk mencari kota berdasarkan ID
-Kota *findKotaById(const Kota kotaList[], int count, int id);
+void findKotaById(int id);
 
-// Fungsi untuk menambah kota baru
-int addKota(Kota kotaList[], int *count, const char *nama);
-
-// Fungsi untuk menyimpan data kota ke file CSV
-int saveKota(const Kota kotaList[], int count);
-
-// Validasi nama kota unik
-int isKotaNamaUnique(const Kota kotaList[], int count, const char *nama);
+// Fungsi untuk membuat backup file kota
+void saveKotaBackup();
 
 // Membandingkan string tanpa memperhatikan huruf besar/kecil
 int caseInsensitiveCompare(const char *str1, const char *str2);
-
-void displayKotaFromFile();
 
 #endif
