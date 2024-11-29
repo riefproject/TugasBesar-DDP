@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "all.h"
 
-<<<<<<< HEAD
 // Fungsi utama halaman admin
 void adminMenu(); // Halaman utama admin
 
@@ -265,10 +264,6 @@ int main()
 
 // Fungsi utama
 // int main()
-=======
-// // Fungsi login sederhana
-// int loginAsAdmin()
->>>>>>> df1da020c0eff99746f85b8baa7810203710e6be
 // {
 //     char username[50], password[50];
 
@@ -350,12 +345,14 @@ int main()
 // }
 
 // Fungsi utama
-int main() {
+int main()
+{
     User *currentUser = NULL;
-    
-    while (1) {
+
+    while (1)
+    {
         handleMenu(&currentUser);
     }
-    
+
     return 0;
 }

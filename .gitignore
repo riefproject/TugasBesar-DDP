@@ -44,6 +44,7 @@ Makefile
 # Temporary files
 *.tmp
 *.temp
+!/temp/.gitkeep
 
 # System files
 .DS_Store
