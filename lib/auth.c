@@ -82,7 +82,7 @@ void registerUser()
     free(newUser);
 }
 
-int loginUser(User *user)
+int loginUser(User **user)
 {
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
@@ -100,7 +100,7 @@ int loginUser(User *user)
         User *foundUser = findUserByUsername(username);
         if (foundUser)
         {
-            *user = *foundUser;
+            *user = foundUser;
             free(foundUser);
             printf("Selamat datang, %s!\n", getName(user));
             return 1;

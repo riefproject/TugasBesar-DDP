@@ -32,10 +32,10 @@ struct User
     char notelp[MAX_NOTELP];
     Role role;
 
-    struct User *(*all)();
-    struct User *(*find)(int);
-    struct User *(*create)(const char *, const char *, const char *, const char *, const char *, Role);
-    int (*update)(int, struct User);
+    User *(*all)();
+    User *(*find)(int);
+    User *(*create)(const char *, const char *, const char *, const char *, const char *, Role);
+    int (*update)(int, User);
     int (*destroy)(int);
 };
 
