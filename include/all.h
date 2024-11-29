@@ -1,7 +1,6 @@
 #ifndef ALL_H
 #define ALL_H
 
-#include "auth.h"
 #include "bioskop.h"
 #include "db.h"
 #include "display.h"

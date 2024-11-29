@@ -2,168 +2,95 @@
 #include <string.h>
 #include "all.h"
 
-// Fungsi login sederhana
-int loginAsAdmin()
-{
-    char username[50], password[50];
-
-    printf("Username: ");
-    scanf("%s", username);
-    printf("Password: ");
-    scanf("%s", password);
-
-    // Simulasi admin login
-    if (strcmp(username, "admin") == 0 && strcmp(password, "admin123") == 0)
-    {
-        printf("\nLogin berhasil! Selamat datang, Admin.\n");
-        return 1; // Login berhasil
-    }
-
-    printf("\nLogin gagal. Username atau password salah.\n");
-    return 0; // Login gagal
-}
-
-// Menu utama setelah login sebagai admin
-void adminMenu()
-{
-    int choice;
-
-    do
-    {
-        printf("\n=== Menu Admin ===\n");
-        printf("1. Tampilkan Data Kota\n");
-        printf("2. Tampilkan Data Bioskop\n");
-        printf("3. Tampilkan Data Studio\n");
-        printf("4. Tampilkan Data Film\n");
-        printf("5. Tambah Data Film\n");
-        printf("0. Logout\n");
-        printf("Pilihan Anda: ");
-        scanf("%d", &choice);
-
-        switch (choice)
-        {
-        case 1:
-            displayKotaFromFile();
-            break;
-        case 2:
-            displayBioskopFromFile();
-            break;
-        case 3:
-            displayStudioFromFile();
-            break;
-        case 4:
-            displayFilmFromFile();
-            break;
-        case 0:
-            printf("Logout berhasil. Sampai jumpa!\n");
-            break;
-        case 9:
-            break;
-
-        default:
-            printf("Pilihan tidak valid.\n");
-        }
-    } while (choice != 0);
-}
-
-int main()
-{
-    printf("=== Sistem Manajemen Bioskop ===\n");
-
-    if (loginAsAdmin())
-    {
-        adminMenu();
-    }
-    else
-    {
-        printf("Akses ditolak. Program akan keluar.\n");
-    }
-
-    return 0;
-}
-
-// Fungsi utama
-// int main()
+// // Fungsi login sederhana
+// int loginAsAdmin()
 // {
+//     char username[50], password[50];
 
-// User currentUser = {1, "rief", "admin@example.com", "08123456789", "1234567890123456", "hashed_password", ADMIN, NULL};
-// showWelcomeMessage();
-// showMenuu(currentUser);
-// User *user = NULL;
-// char *menu[10]; // Pastikan cukup besar untuk menyimpan semua menu
-// int menuCount = 0;
-// int selection = -1;
-// char menuMessage[512] = "Selamat datang di aplikasi bioskop";
+//     printf("Username: ");
+//     scanf("%s", username);
+//     printf("Password: ");
+//     scanf("%s", password);
 
-// while (1)
-// {
-//     if (user)
+//     // Simulasi admin login
+//     if (strcmp(username, "admin") == 0 && strcmp(password, "admin123") == 0)
 //     {
-//         char *newMenu[] = {
-//             "Tiket ku",
-//             "Pesan Tiket",
-//             "Profil",
-//             "Logout",
-//         };
+//         printf("\nLogin berhasil! Selamat datang, Admin.\n");
+//         return 1; // Login berhasil
+//     }
 
-//         menuCount = 4;
-//         sprintf(menuMessage, "Hallo, %s", user->name);
-//         setMenu(menu, newMenu, menuCount);
+//     printf("\nLogin gagal. Username atau password salah.\n");
+//     return 0; // Login gagal
+// }
 
-//         selection = showMenu(menu, menuCount, menuMessage);
+// // Menu utama setelah login sebagai admin
+// void adminMenu()
+// {
+//     int choice;
 
-//         switch (selection)
+//     do
+//     {
+//         printf("\n=== Menu Admin ===\n");
+//         printf("1. Tampilkan Data Kota\n");
+//         printf("2. Tampilkan Data Bioskop\n");
+//         printf("3. Tampilkan Data Studio\n");
+//         printf("4. Tampilkan Data Film\n");
+//         printf("5. Tambah Data Film\n");
+//         printf("0. Logout\n");
+//         printf("Pilihan Anda: ");
+//         scanf("%d", &choice);
+
+//         switch (choice)
 //         {
 //         case 1:
-//             printf("Tiket ku\n");
+//             displayKotaFromFile();
 //             break;
 //         case 2:
-//             printf("Pesan Tiket\n");
+//             displayBioskopFromFile();
 //             break;
 //         case 3:
-//             printf("Profil\n");
+//             displayStudioFromFile();
 //             break;
 //         case 4:
-//             printf("Logout berhasil!\n");
-//             free(user);
-//             user = NULL;
+//             displayFilmFromFile();
 //             break;
+//         case 0:
+//             printf("Logout berhasil. Sampai jumpa!\n");
+//             break;
+//         case 9:
+//             break;
+
 //         default:
 //             printf("Pilihan tidak valid.\n");
 //         }
+//     } while (choice != 0);
+// }
+
+// int main()
+// {
+//             // registerUser();
+
+//     printf("=== Sistem Manajemen Bioskop ===\n");
+
+//     if (loginAsAdmin())
+//     {
+//         adminMenu();
 //     }
 //     else
 //     {
-//         // Menu untuk user yang belum login
-//         char *newMenu[] = {
-//             "Login",
-//             "Register",
-//             "Keluar",
-//         };
-
-//         menuCount = 3;
-//         strcpy(menuMessage, "Selamat datang di aplikasi bioskop");
-//         setMenu(menu, newMenu, menuCount);
-
-//         selection = showMenu(menu, menuCount, menuMessage);
-
-//         switch (selection)
-//         {
-//         case 1:
-//             user = newUser();
-//             loginUser(user);
-//             break;
-//         case 2:
-//             registerUser();
-//             break;
-//         case 3:
-//             printf("Selamat tinggal.\n");
-//             exit(0);
-//         default:
-//             printf("Pilihan tidak valid. Coba lagi.\n");
-//         }
+//         printf("Akses ditolak. Program akan keluar.\n");
 //     }
-// }
 
 //     return 0;
 // }
+
+// Fungsi utama
+int main() {
+    User *currentUser = NULL;
+    
+    while (1) {
+        handleMenu(&currentUser);
+    }
+    
+    return 0;
+}
