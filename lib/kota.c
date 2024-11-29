@@ -201,3 +201,161 @@ void saveKotaBackup()
     fclose(backup);
     printf("Backup file kota.csv berhasil dibuat sebagai kota_backup.csv.\n");
 }
+
+int updateKota()
+{
+    FILE *file = fopen(KOTA_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File kota.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_KOTA_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    char namaBaru[MAX_NAME_KOTA_LENGTH];
+
+    printf("Masukkan ID Kota yang ingin diperbarui: ");
+    scanf("%d", &id);
+    printf("Masukkan Nama Baru: ");
+    scanf(" %[^\n]", namaBaru);
+
+    char line[256];
+    int found = 0;
+    int isUnique = 1;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        char nama[MAX_NAME_KOTA_LENGTH];
+        sscanf(line, "%d,%49[^\n]", &existingId, nama);
+
+        if (strcmp(nama, namaBaru) == 0 && existingId != id)
+        {
+            isUnique = 0;
+        }
+
+        if (existingId == id)
+        {
+            fprintf(tempFile, "%d,%s\n", id, namaBaru);
+            found = 1;
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (!isUnique)
+    {
+        printf("Gagal memperbarui: Nama kota '%s' sudah ada.\n", namaBaru);
+        remove(TEMP_KOTA_FILE);
+        return 0;
+    }
+
+    if (found)
+    {
+        remove(KOTA_CSV_FILE);
+        rename(TEMP_KOTA_FILE, KOTA_CSV_FILE);
+        printf("Kota dengan ID %d berhasil diperbarui.\n", id);
+    }
+    else
+    {
+        remove(TEMP_KOTA_FILE);
+        printf("Kota dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}
+
+int deleteKota()
+{
+    FILE *file = fopen(KOTA_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File kota.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_KOTA_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    printf("Masukkan ID Kota yang ingin dihapus: ");
+    scanf("%d", &id);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        char nama[MAX_NAME_KOTA_LENGTH];
+        sscanf(line, "%d,%49[^\n]", &existingId, nama);
+
+        if (existingId == id)
+        {
+            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
+            printf("ID Kota: %d\nNama Kota: %s\n", existingId, nama);
+            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
+            char confirm;
+            scanf(" %c", &confirm);
+
+            if (confirm == 'y' || confirm == 'Y')
+            {
+                printf("Data dengan ID %d berhasil dihapus.\n", id);
+                found = 1; // Jangan salin baris ini ke file temporary
+            }
+            else
+            {
+                printf("Penghapusan dibatalkan.\n");
+                fputs(line, tempFile); // Salin kembali data jika dibatalkan
+            }
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(KOTA_CSV_FILE);
+        rename(TEMP_KOTA_FILE, KOTA_CSV_FILE);
+    }
+    else
+    {
+        remove(TEMP_KOTA_FILE);
+        printf("Kota dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}

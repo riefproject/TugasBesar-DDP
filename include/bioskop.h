@@ -5,7 +5,8 @@
 #define MAX_BIOSKOP_NAME 50
 #define MAX_MANAGER_NAME 50
 #define MAX_BIOSKOP 100
-#define BIOSKOP_CSV_FILE "db/bioskop.csv" // Nama file statis untuk bioskop
+#define BIOSKOP_CSV_FILE "db/bioskop.csv"
+#define TEMP_BIOSKOP_FILE "temp/temp_bioskop.csv"
 
 typedef struct
 {
@@ -35,5 +36,11 @@ int addBioskop();
 
 // Fungsi untuk menampilkan daftar bioskop langsung dari file
 void displayBioskopFromFile();
+
+// Fungsi untuk update daftar bioskop langsung dari file
+int updateBioskop();
+
+// Fungsi untuk hapus daftar bioskop langsung dari file
+int deleteBioskop();
 
 #endif

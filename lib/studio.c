@@ -201,3 +201,152 @@ void displayStudioFromFile()
     fclose(studioFile);
     fclose(bioskopFile);
 }
+
+int updateStudio()
+{
+    FILE *file = fopen(STUDIO_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File studio.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_STUDIO_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    int jumlahKursiBaru;
+    float additionalFeeBaru;
+
+    printf("Masukkan ID Studio yang ingin diperbarui: ");
+    scanf("%d", &id);
+    printf("Masukkan Jumlah Kursi Baru: ");
+    scanf("%d", &jumlahKursiBaru);
+    printf("Masukkan Additional Fee Baru: ");
+    scanf("%f", &additionalFeeBaru);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId, bioskopId, jumlahKursi;
+        float additionalFee;
+        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskopId, &jumlahKursi, &additionalFee);
+
+        if (existingId == id)
+        {
+            fprintf(tempFile, "%d,%d,%d,%.2f\n", id, bioskopId, jumlahKursiBaru, additionalFeeBaru);
+            found = 1;
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(STUDIO_CSV_FILE);
+        rename(TEMP_STUDIO_FILE, STUDIO_CSV_FILE);
+        printf("Studio dengan ID %d berhasil diperbarui.\n", id);
+    }
+    else
+    {
+        remove(TEMP_STUDIO_FILE);
+        printf("Studio dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}
+
+int deleteStudio()
+{
+    FILE *file = fopen(STUDIO_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File studio.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_STUDIO_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    printf("Masukkan ID Studio yang ingin dihapus: ");
+    scanf("%d", &id);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId, bioskopId, jumlahKursi;
+        float additionalFee;
+        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskopId, &jumlahKursi, &additionalFee);
+
+        if (existingId == id)
+        {
+            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
+            printf("ID Studio: %d\nID Bioskop: %d\nJumlah Kursi: %d\nAdditional Fee: %.2f\n",
+                   existingId, bioskopId, jumlahKursi, additionalFee);
+            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
+            char confirm;
+            scanf(" %c", &confirm);
+
+            if (confirm == 'y' || confirm == 'Y')
+            {
+                printf("Data dengan ID %d berhasil dihapus.\n", id);
+                found = 1; // Jangan salin baris ini ke file temporary
+            }
+            else
+            {
+                printf("Penghapusan dibatalkan.\n");
+                fputs(line, tempFile); // Salin kembali data jika dibatalkan
+            }
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(STUDIO_CSV_FILE);
+        rename(TEMP_STUDIO_FILE, STUDIO_CSV_FILE);
+    }
+    else
+    {
+        remove(TEMP_STUDIO_FILE);
+        printf("Studio dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}

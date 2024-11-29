@@ -26,7 +26,38 @@ const char *getFilmJudul(const Film *film) { return film->judul; }
 const char *getFilmGenre(const Film *film) { return film->genre; }
 int getFilmDurasi(const Film *film) { return film->durasi; }
 int isFilmTersedia(const Film *film) { return film->tersedia; }
+int getFilmDurasiById(int film_id)
+{
+    FILE *file = fopen(FILM_CSV_FILE, "r");
+    if (!file)
+    {
+        perror("Gagal membuka file film.csv");
+        return 0; // Gagal membaca file
+    }
 
+    char line[256];
+    int id, durasi;
+    char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+
+    // Lewati header
+    fgets(line, sizeof(line), file);
+
+    // Baca setiap baris dan cari berdasarkan ID film
+    while (fgets(line, sizeof(line), file))
+    {
+        sscanf(line, "%d,%*d,%9[^,],%99[^,],%49[^,],%d,%*d",
+               &id, kode_film, judul, genre, &durasi);
+
+        if (id == film_id)
+        {
+            fclose(file);
+            return durasi; // Kembalikan durasi jika ID cocok
+        }
+    }
+
+    fclose(file);
+    return 0; // Film dengan ID tersebut tidak ditemukan
+}
 // Setter
 void setFilmId(Film *film, int id) { film->id = id; }
 void setFilmBioskopId(Film *film, int bioskop_id) { film->bioskop_id = bioskop_id; }
@@ -206,4 +237,159 @@ int addFilm()
     fclose(file);
     printf("Film '%s' berhasil ditambahkan dengan ID %d.\n", judul, id);
     return 1;
+}
+
+int updateFilm()
+{
+    FILE *file = fopen(FILM_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File film.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_FILM_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id, durasiBaru, tersediaBaru;
+    char judulBaru[MAX_FILM_TITLE], genreBaru[MAX_GENRE];
+
+    printf("Masukkan ID Film yang ingin diperbarui: ");
+    scanf("%d", &id);
+    printf("Masukkan Judul Baru: ");
+    scanf(" %[^\n]", judulBaru);
+    printf("Masukkan Genre Baru: ");
+    scanf(" %[^\n]", genreBaru);
+    printf("Masukkan Durasi Baru (menit): ");
+    scanf("%d", &durasiBaru);
+    printf("Apakah Film Tersedia? (1: Ya, 0: Tidak): ");
+    scanf("%d", &tersediaBaru);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId, bioskopId, durasi, tersedia;
+        char kodeFilm[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+        sscanf(line, "%d,%d,%9[^,],%99[^,],%49[^,],%d,%d",
+               &existingId, &bioskopId, kodeFilm, judul, genre, &durasi, &tersedia);
+
+        if (existingId == id)
+        {
+            fprintf(tempFile, "%d,%d,%s,%s,%s,%d,%d\n",
+                    id, bioskopId, kodeFilm, judulBaru, genreBaru, durasiBaru, tersediaBaru);
+            found = 1;
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(FILM_CSV_FILE);
+        rename(TEMP_FILM_FILE, FILM_CSV_FILE);
+        printf("Film dengan ID %d berhasil diperbarui.\n", id);
+    }
+    else
+    {
+        remove(TEMP_FILM_FILE);
+        printf("Film dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}
+
+int deleteFilm()
+{
+    FILE *file = fopen(FILM_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File film.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_FILM_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    printf("Masukkan ID Film yang ingin dihapus: ");
+    scanf("%d", &id);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId, bioskopId, durasi, tersedia;
+        char kodeFilm[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
+        sscanf(line, "%d,%d,%9[^,],%99[^,],%49[^,],%d,%d",
+               &existingId, &bioskopId, kodeFilm, judul, genre, &durasi, &tersedia);
+
+        if (existingId == id)
+        {
+            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
+            printf("ID Film: %d\nKode Film: %s\nJudul: %s\nGenre: %s\nDurasi: %d menit\nTersedia: %s\n",
+                   existingId, kodeFilm, judul, genre, durasi, tersedia ? "Ya" : "Tidak");
+            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
+            char confirm;
+            scanf(" %c", &confirm);
+
+            if (confirm == 'y' || confirm == 'Y')
+            {
+                printf("Data dengan ID %d berhasil dihapus.\n", id);
+                found = 1; // Jangan salin baris ini ke file temporary
+            }
+            else
+            {
+                printf("Penghapusan dibatalkan.\n");
+                fputs(line, tempFile); // Salin kembali data jika dibatalkan
+            }
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(FILM_CSV_FILE);
+        rename(TEMP_FILM_FILE, FILM_CSV_FILE);
+    }
+    else
+    {
+        remove(TEMP_FILM_FILE);
+        printf("Film dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
 }

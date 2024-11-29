@@ -172,3 +172,165 @@ void displayBioskopFromFile()
     fclose(bioskopFile);
     fclose(kotaFile);
 }
+
+int updateBioskop()
+{
+    FILE *file = fopen(BIOSKOP_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File bioskop.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_BIOSKOP_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    char namaBaru[MAX_BIOSKOP_NAME];
+    char managerBaru[MAX_MANAGER_NAME];
+
+    printf("Masukkan ID Bioskop yang ingin diperbarui: ");
+    scanf("%d", &id);
+    printf("Masukkan Nama Baru: ");
+    scanf(" %[^\n]", namaBaru);
+    printf("Masukkan Manager Baru: ");
+    scanf(" %[^\n]", managerBaru);
+
+    char line[256];
+    int found = 0;
+    int isUnique = 1;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
+        sscanf(line, "%d,%*d,%49[^,],%49[^\n]", &existingId, nama, manager);
+
+        // Validasi unik untuk nama bioskop
+        if (strcmp(nama, namaBaru) == 0 && existingId != id)
+        {
+            isUnique = 0;
+        }
+
+        if (existingId == id)
+        {
+            fprintf(tempFile, "%d,%d,%s,%s\n", id, 0, namaBaru, managerBaru); // 0 sebagai placeholder kota_id
+            found = 1;
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (!isUnique)
+    {
+        printf("Gagal memperbarui: Nama bioskop '%s' sudah ada.\n", namaBaru);
+        remove(TEMP_BIOSKOP_FILE);
+        return 0;
+    }
+
+    if (found)
+    {
+        remove(BIOSKOP_CSV_FILE);
+        rename(TEMP_BIOSKOP_FILE, BIOSKOP_CSV_FILE);
+        printf("Bioskop dengan ID %d berhasil diperbarui.\n", id);
+    }
+    else
+    {
+        remove(TEMP_BIOSKOP_FILE);
+        printf("Bioskop dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}
+
+int deleteBioskop()
+{
+    FILE *file = fopen(BIOSKOP_CSV_FILE, "r");
+    if (!file)
+    {
+        printf("File bioskop.csv tidak ditemukan.\n");
+        return 0;
+    }
+
+    FILE *tempFile = fopen(TEMP_BIOSKOP_FILE, "w");
+    if (!tempFile)
+    {
+        perror("Gagal membuat file sementara.");
+        fclose(file);
+        return 0;
+    }
+
+    int id;
+    printf("Masukkan ID Bioskop yang ingin dihapus: ");
+    scanf("%d", &id);
+
+    char line[256];
+    int found = 0;
+
+    // Salin header
+    fgets(line, sizeof(line), file);
+    fputs(line, tempFile);
+
+    // Proses baris data
+    while (fgets(line, sizeof(line), file))
+    {
+        int existingId;
+        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
+        sscanf(line, "%d,%*d,%49[^,],%49[^\n]", &existingId, nama, manager);
+
+        if (existingId == id)
+        {
+            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
+            printf("ID Bioskop: %d\nNama Bioskop: %s\nManager: %s\n", existingId, nama, manager);
+            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
+            char confirm;
+            scanf(" %c", &confirm);
+
+            if (confirm == 'y' || confirm == 'Y')
+            {
+                printf("Data dengan ID %d berhasil dihapus.\n", id);
+                found = 1; // Jangan salin baris ini ke file temporary
+            }
+            else
+            {
+                printf("Penghapusan dibatalkan.\n");
+                fputs(line, tempFile); // Salin kembali data jika dibatalkan
+            }
+        }
+        else
+        {
+            fputs(line, tempFile);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(BIOSKOP_CSV_FILE);
+        rename(TEMP_BIOSKOP_FILE, BIOSKOP_CSV_FILE);
+    }
+    else
+    {
+        remove(TEMP_BIOSKOP_FILE);
+        printf("Bioskop dengan ID %d tidak ditemukan.\n", id);
+    }
+
+    return found;
+}

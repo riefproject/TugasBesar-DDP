@@ -5,6 +5,7 @@
 
 #define MAX_STUDIO 100
 #define STUDIO_CSV_FILE "db/studio.csv"
+#define TEMP_STUDIO_FILE "temp_studio.csv"
 
 typedef struct
 {
@@ -37,5 +38,11 @@ void findStudioById(int id);
 
 // Fungsi untuk menampilkan daftar studio dari file
 void displayStudioFromFile();
+
+// Fungsi untuk update daftar studio dari file
+int updateStudio();
+
+// Fungsi untuk delete daftar studio dari file
+int deleteStudio();
 
 #endif

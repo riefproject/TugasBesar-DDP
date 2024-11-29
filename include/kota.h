@@ -4,6 +4,7 @@
 #define MAX_NAME_KOTA_LENGTH 50
 #define MAX_KOTA 100
 #define KOTA_CSV_FILE "db/kota.csv"
+#define TEMP_KOTA_FILE "temp/temp_kota.csv"
 
 typedef struct
 {
@@ -27,6 +28,12 @@ int addKota();
 
 // Fungsi untuk menampilkan daftar kota langsung dari file
 void displayKotaFromFile();
+
+// Fungsi untuk update daftar kota langsung dari file
+int updateKota();
+
+// Fungsi untuk delete daftar kota langsung dari file
+int deleteKota();
 
 // Fungsi untuk mencari kota berdasarkan ID
 void findKotaById(int id);

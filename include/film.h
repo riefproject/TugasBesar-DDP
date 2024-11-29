@@ -6,7 +6,8 @@
 #define MAX_FILM_TITLE 100
 #define MAX_GENRE 50
 #define MAX_FILM 100
-#define FILM_CSV_FILE "db/film.csv" // Nama file statis untuk film
+#define FILM_CSV_FILE "db/film.csv"
+#define TEMP_FILM_FILE "temp/temp_film.csv"
 
 typedef struct
 {
@@ -30,6 +31,7 @@ const char *getFilmJudul(const Film *film);
 const char *getFilmGenre(const Film *film);
 int getFilmDurasi(const Film *film);
 int isFilmTersedia(const Film *film);
+int getFilmDurasiById(int film_id);
 
 // Setter
 void setFilmId(Film *film, int id);
@@ -45,5 +47,11 @@ void displayFilmFromFile();
 
 // Fungsi untuk menambah film baru
 int addFilm();
+
+// Fungsi untuk update film
+int updateFilm();
+
+// Fungsi untuk delete film
+int deleteFilm();
 
 #endif
