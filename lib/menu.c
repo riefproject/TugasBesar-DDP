@@ -10,7 +10,7 @@
 // ================================== core ================================== //
 
 MenuConfig getGuestMenu() {
-    static char *options[] = {
+    char *options[] = {
         "Login",
         "Register",
         "Keluar"
@@ -19,13 +19,13 @@ MenuConfig getGuestMenu() {
 }
 
 MenuConfig getUserMenu(User *user) {
-    static char *options[] = {
+    char *options[] = {
         "Tiket ku",
         "Pesan Tiket",
         "Profil",
         "Logout"
     };
-    static char message[100];
+    char message[100];
     sprintf(message, "Hallo, %s", user->name);
     return createMenuConfig(options, 4, message);
 }
