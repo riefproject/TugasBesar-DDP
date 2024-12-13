@@ -82,14 +82,17 @@ void registerUser()
     free(newUser);
 }
 
-User *getCurrentUser() {
+User *getCurrentUser()
+{
     FILE *file = fopen("session.bin", "rb");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         return NULL;
     }
 
     User *sessionUser = (User *)malloc(sizeof(User));
-    if (sessionUser == NULL) {
+    if (sessionUser == NULL)
+    {
         fclose(file);
         return NULL;
     }
@@ -97,7 +100,8 @@ User *getCurrentUser() {
     size_t readResult = fread(sessionUser, sizeof(User), 1, file);
     fclose(file);
 
-    if (readResult != 1) {
+    if (readResult != 1)
+    {
         free(sessionUser);
         return NULL;
     }
@@ -105,37 +109,45 @@ User *getCurrentUser() {
     return sessionUser;
 }
 
-void saveSession(User *user) {
+void saveSession(User *user)
+{
     FILE *file = fopen("session.bin", "wb");
-    if (file != NULL) {
+    if (file != NULL)
+    {
         fwrite(user, sizeof(User), 1, file);
         fclose(file);
     }
 }
 
-void clearSession() {
+void clearSession()
+{
     remove("session.bin");
 }
 
-int loginUser() {
+int loginUser()
+{
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
 
     printf("Masukkan username: ");
-    if (fgets(username, sizeof(username), stdin) == NULL) {
+    if (fgets(username, sizeof(username), stdin) == NULL)
+    {
         return 0;
     }
     username[strcspn(username, "\n")] = 0;
 
     printf("Masukkan password: ");
-    if (fgets(password, sizeof(password), stdin) == NULL) {
+    if (fgets(password, sizeof(password), stdin) == NULL)
+    {
         return 0;
     }
     password[strcspn(password, "\n")] = 0;
 
-    if (authenticateUser(username, password)) {
+    if (authenticateUser(username, password))
+    {
         User *foundUser = findUserByUsername(username);
-        if (foundUser != NULL) {
+        if (foundUser != NULL)
+        {
             saveSession(foundUser);
             free(foundUser);
             printf("Login berhasil!\n");
@@ -147,9 +159,11 @@ int loginUser() {
     return 0;
 }
 
-int isLogin() {
+int isLogin()
+{
     FILE *file = fopen("session.bin", "rb");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         return 0;
     }
 

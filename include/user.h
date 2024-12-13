@@ -1,7 +1,6 @@
 #ifndef USER_H
 #define USER_H
 
-
 // ================================== constant ================================== //
 
 #define MAX_USERNAME 255
@@ -32,12 +31,6 @@ struct User
     char email[MAX_EMAIL];
     char notelp[MAX_NOTELP];
     Role role;
-
-    User *(*all)();
-    User *(*find)(int);
-    User *(*create)(const char *, const char *, const char *, const char *, const char *, Role);
-    int (*update)(int, User);
-    int (*destroy)(int);
 };
 
 // ================================== setter ================================== //
@@ -55,14 +48,24 @@ const char *getName(const User *user);
 const char *getEmail(const User *user);
 const char *getNoTelp(const User *user);
 
-// ================================== other ================================== //
+// ================================== Main Menu ================================ //
 
-User *newUser();
-User *allUsers();
+int menuUser();
+void createUserMenu();
+void updateUserMenu(User user);
+
+// ================================== Action ================================== //
+
 User *findUser(int id);
 User *findUserByUsername(const char *username);
 User *createUser(const char *username, const char *password, const char *name, const char *email, const char *notelp, Role role);
-int updateUser(int id, User user);
-int destroyUser(int id);
+User *updateUser(const int id, const char *username, const char *password, const char *name, const char *email, const char *notelp, const Role role);
+int deleteUser(User user);
+
+// ================================== Utils ================================== //
+
+int countUserData();
+int loadUser(User **users);
+void printUserTable(User *users, int count, int page, int perPage, int selection);
 
 #endif

@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <unistd.h>
+
 #include "all.h"
 
 void printTable(User *users, int count, int page, int perPage, int selection)
@@ -39,7 +41,7 @@ void printTable(User *users, int count, int page, int perPage, int selection)
     printf("\n");
 
     // Cetak header tabel
-    printf("[*]| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+    printf("[ * ]| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
            idWidth, "ID",
            usernameWidth, "Username",
            nameWidth, "Name",
@@ -56,7 +58,7 @@ void printTable(User *users, int count, int page, int perPage, int selection)
     {
         if (selection == i + 1)
         {
-            printf("[*]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*d |\n",
+            printf("[ * ]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*d |\n",
                    idWidth, users[i].id,
                    usernameWidth, users[i].username,
                    nameWidth, users[i].name,
@@ -66,7 +68,7 @@ void printTable(User *users, int count, int page, int perPage, int selection)
         }
         else
         {
-            printf("[ ]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*d |\n",
+            printf("[   ]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*d |\n",
                    idWidth, users[i].id,
                    usernameWidth, users[i].username,
                    nameWidth, users[i].name,
@@ -205,10 +207,42 @@ void printTable(User *users, int count, int page, int perPage, int selection)
 
 int main()
 {
-    // Inisialisasi sistem, jika diperlukan
-    printf("Selamat datang di Sistem Pemesanan Tiket!\n\n");
-    
-    // Jalankan menu utama
+    system("cls");
+    // puts(
+    //     "====================================================    \n"
+    //     "    ____  _           _               _                 \n"
+    //     "   | __ )(_) ___  ___| | _____  _ __ | | ___   _        \n"
+    //     "   |  _ \\| |/ _ \\/ __| |/ / _ \\| '_ \\| |/ / | | |   \n"
+    //     "   | |_) | | (_) \\__ \\   < (_) | |_) |   <| |_| |     \n"
+    //     "   |____/|_|\\___/|___/_|\\_\\___/| .__/|_|\\_\\\\__,_| \n"
+    //     "                               |_|                      \n"
+    //     "====================================================    \n"
+    //     "      Selamat datang di Sistem Pemesanan Tiket!         \n");
+
+    // const int total = 40;
+    // const char spinner[] = "|/-\\";
+    // int spinner_index = 0;
+
+    // for (int i = 0; i <= total; i++)
+    // {
+    //     printf("\r     [");
+    //     for (int j = 0; j < i; j++)
+    //     {
+    //         printf(BLUE BOLD "#");
+    //     }
+    //     for (int j = i; j < total; j++)
+    //     {
+    //         printf(" ");
+    //     }
+    //     printf("] %c", spinner[spinner_index]);
+
+    //     fflush(stdout);
+    //     spinner_index = (spinner_index + 1) % 4;
+    //     usleep(100000);
+    // }
+
+    // printf(RESET);
+
     handleMenu();
 
     return 0;

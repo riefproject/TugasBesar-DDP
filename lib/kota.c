@@ -1,40 +1,16 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <conio.h>
+#include <unistd.h>
 #include <ctype.h>
+
+#include "display.h"
 #include "kota.h"
+#include "menu.h"
+#include "db.h"
 
-// Constructor
-Kota createKota(int id, const char *nama)
-{
-    Kota kota;
-    kota.id = id;
-    strncpy(kota.nama, nama, MAX_NAME_KOTA_LENGTH - 1);
-    kota.nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
-    return kota;
-}
-
-// Getter
-int getKotaId(const Kota *kota)
-{
-    return kota->id;
-}
-
-const char *getKotaNama(const Kota *kota)
-{
-    return kota->nama;
-}
-
-// Setter
-void setKotaId(Kota *kota, int id)
-{
-    kota->id = id;
-}
-
-void setKotaNama(Kota *kota, const char *nama)
-{
-    strncpy(kota->nama, nama, MAX_NAME_KOTA_LENGTH - 1);
-    kota->nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
-}
+// ==================================== Other ================================== //
 
 // Membandingkan string tanpa memperhatikan huruf besar/kecil
 int caseInsensitiveCompare(const char *str1, const char *str2)
@@ -51,311 +27,471 @@ int caseInsensitiveCompare(const char *str1, const char *str2)
     return *str1 == '\0' && *str2 == '\0';
 }
 
-// Menambahkan kota baru
-int addKota()
+// ================================== Main Menu ================================ //
+
+int menuKota()
 {
-    FILE *file = fopen(KOTA_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
-    if (!file)
+    Kota *kotaList;
+    int count = loadKota(&kotaList);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        // Jika file tidak ada, buat file baru
-        file = fopen(KOTA_CSV_FILE, "w+");
-        if (!file)
+        system("cls");
+        selection = (page - 1) * perPage + pointer;
+
+        printKotaTable(kotaList, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
+        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
         {
-            perror("Gagal membuka atau membuat file kota.");
+            command = getch();
+
+            if (command == 77)
+            {
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf("Sudah di halaman terakhir.\n");
+                    sleep(500);
+                }
+            }
+            else if (command == 75)
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf("Sudah di halaman pertama.\n");
+                    sleep(500);
+                }
+            }
+            else if (command == 72)
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80)
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 32)
+        {
+            printf("City selected: %d\n", selection);
+            free(kotaList);
             return 0;
         }
-        // Tulis header ke file baru
-        fprintf(file, "id,nama\n");
-    }
-
-    // Buffer untuk membaca file
-    char line[256];
-    int id = 0;
-    char nama[MAX_NAME_KOTA_LENGTH];
-    int isUnique = 1;
-
-    // Dapatkan input nama kota dari admin
-    printf("Masukkan nama kota baru: ");
-    scanf(" %[^\n]", nama);
-
-    // Skip header
-    fgets(line, sizeof(line), file);
-
-    // Cek apakah nama sudah ada di file
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char existingNama[MAX_NAME_KOTA_LENGTH];
-        sscanf(line, "%d,%49[^\n]", &existingId, existingNama);
-        id = existingId; // Simpan ID terakhir
-        if (caseInsensitiveCompare(existingNama, nama))
+        else if (command == 'C' || command == 'c')
         {
-            isUnique = 0;
-            break;
+            createKotaMenu();
+
+            free(kotaList);
+            count = loadKota(&kotaList);
+        }
+        else if (command == 'U' || command == 'u')
+        {
+            updateKotaMenu(kotaList[selection - 1]);
+
+            free(kotaList);
+            count = loadKota(&kotaList);
+        }
+        else if (command == 'D' || command == 'd')
+        {
+            deleteKota(kotaList[selection - 1]);
+
+            free(kotaList);
+            count = loadKota(&kotaList);
+        }
+        else if (command == 'E' || command == 'e')
+        {
+            free(kotaList);
+            return 0;
+        }
+        else
+        {
+            printf(YELLOW BOLD "Command not found\n" RESET);
+            sleep(500);
         }
     }
+}
 
-    if (!isUnique)
+void createKotaMenu()
+{
+    system("cls");
+
+    printf(GREEN "====================================================\n");
+    printf("                Menu Tambah Kota                    \n");
+    printf("====================================================\n" RESET);
+
+    char nama[MAX_NAME_KOTA_LENGTH];
+
+    while (1)
     {
-        printf("Gagal menambah kota: nama kota '%s' sudah ada.\n", nama);
-        fclose(file);
-        return 0;
+        printf("Masukkan nama kota\t: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0;
+
+        if (strcmp(nama, "") == 0)
+        {
+            printf(RED BOLD "Nama kota tidak boleh kosong.\n" RESET);
+            sleep(1);
+            continue;
+        }
+
+        break;
     }
 
-    // Tambahkan kota baru
-    id++; // Increment ID
-    fprintf(file, "%d,%s\n", id, nama);
+    Kota *newKota = createKota(nama);
+    if (!newKota)
+    {
+        printf(RED BOLD "Gagal menambah kota. Harap coba lagi!\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil menambah kota!.\n" RESET);
+    sleep(2);
+    free(newKota);
+}
+
+void updateKotaMenu(Kota kota)
+{
+    printf(YELLOW "====================================================\n");
+    printf("                 Menu Edit Kota                     \n");
+    printf("====================================================\n" RESET);
+
+    char nama[MAX_NAME_KOTA_LENGTH];
+    int id = kota.id;
+
+    while (1)
+    {
+        printf("Masukkan nama kota\t: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0;
+
+        if (strcmp(nama, "") == 0)
+        {
+            printf(RED BOLD "Nama kota tidak boleh kosong.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    Kota *updatedKota = updateKota(id, nama);
+    if (!updatedKota)
+    {
+        printf(RED BOLD "Gagal mengubah kota. Harap coba lagi!\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil mengubah kota!\n" RESET);
+    sleep(2);
+    free(updatedKota);
+}
+
+// ================================== Action ================================== //
+
+Kota *createKota(const char *nama)
+{
+    Kota *kota = malloc(sizeof(Kota));
+    if (!kota)
+    {
+        printf("Alokasi memori gagal, lokasi: createKota\n");
+        return NULL;
+    }
+
+    strncpy(kota->nama, nama, MAX_NAME_KOTA_LENGTH);
+    kota->nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
+
+    FILE *file = fopen(KOTA_DATABASE_NAME, "a");
+    if (!file)
+    {
+        free(kota);
+        printf("Gagal membuka file.\n");
+        return NULL;
+    }
+
+    int id = getlastAvalibleID(KOTA_DATABASE_NAME);
+    kota->id = id;
+
+    fprintf(file, KOTA_SETTER_FORMAT,
+            kota->id,
+            kota->nama);
 
     fclose(file);
-    printf("Kota '%s' berhasil ditambahkan dengan ID %d.\n", nama, id);
+    return kota;
+}
+
+Kota *updateKota(const int id, const char *nama)
+{
+    Kota *updatedKota = malloc(sizeof(Kota));
+    if (!updatedKota)
+    {
+        printf("Alokasi memori gagal, location: updateKota");
+        return NULL;
+    }
+
+    strncpy(updatedKota->nama, nama, MAX_NAME_KOTA_LENGTH);
+    updatedKota->id = id;
+
+    FILE *fromFile = fopen(KOTA_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        free(updatedKota);
+        return NULL;
+    }
+
+    int count = countKotaData();
+    if (count == -1)
+    {
+        printf("Penghitungan data kota gagal, location: updateKota");
+        return NULL;
+    }
+
+    int i = 0;
+
+    Kota kotaList[count];
+
+    while (fscanf(fromFile, KOTA_GETTER_FORMAT,
+                  &kotaList[i].id,
+                  kotaList[i].nama) != EOF)
+    {
+        if (kotaList[i].id == id)
+        {
+            kotaList[i] = *updatedKota;
+        }
+        i++;
+    }
+    fclose(fromFile);
+
+    FILE *toFile = fopen(KOTA_DATABASE_NAME, "w");
+    i = 0;
+    while (i < count)
+    {
+        fprintf(toFile, KOTA_SETTER_FORMAT,
+                kotaList[i].id,
+                kotaList[i].nama);
+        i++;
+    }
+
+    fclose(toFile);
+    return updatedKota;
+}
+
+int deleteKota(Kota kota)
+{
+
+    int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus data kota dengan nama '%s'?\n", kota.nama) + 1;
+    char *head = malloc(len);
+    if (!head)
+    {
+        printf(RED "Gagal mengalokasikan memori.\n" RESET);
+        sleep(1);
+
+        return -1;
+    }
+    snprintf(head, len, "Apakah Anda yakin ingin menghapus data kota dengan nama '%s'?\n", kota.nama);
+
+    char *menu[] = {
+        "Tidak, Batalkan",
+        "Ya, Hapus",
+    };
+
+    char *header[] = {
+        RED BOLD "====================================================\n",
+        "                Konfirmasi Hapus Kota               \n",
+        "====================================================\n\n" RESET,
+        head,
+        NULL};
+
+    int selection = showMenu(menu, 2, header);
+    free(head);
+
+    if (selection == 1)
+    {
+        return 1;
+    }
+
+    // cadangkan data
+    FILE *fromFile = fopen(KOTA_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        printf(RED "Gagal membuka file, lokasi: deleteKota.\n" RESET);
+        sleep(1);
+        return -1;
+    }
+
+    int count = countKotaData();
+    if (count == -1)
+    {
+        printf(RED "Penghitungan data kota gagal, lokasi: deleteKota.\n" RESET);
+        fclose(fromFile);
+        return -1;
+    }
+
+    Kota users[count], temp;
+    int i = 0;
+    while (fscanf(fromFile, KOTA_GETTER_FORMAT,
+                  &temp.id,
+                  temp.nama) != EOF)
+    {
+        if (temp.id != kota.id)
+        {
+            users[i] = temp;
+            i++;
+        }
+    }
+    fclose(fromFile);
+
+    // menulis ulang file dengan data pengguna yang diperbarui
+    FILE *toFile = fopen(KOTA_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf(RED "Gagal membuka file untuk ditulis, lokasi: deleteKota.\n" RESET);
+        return -1;
+    }
+
+    i = 0;
+    while (i < count - 1)
+    {
+        fprintf(toFile, KOTA_SETTER_FORMAT,
+                users[i].id,
+                users[i].nama);
+        sleep(10);
+        i++;
+    }
+
+    fclose(toFile);
+
     return 1;
 }
 
-// Menampilkan daftar kota langsung dari file
-void displayKotaFromFile()
+// ================================== Utils ================================== //
+
+int countKotaData()
 {
-    FILE *file = fopen(KOTA_CSV_FILE, "r");
+    FILE *file = fopen(KOTA_DATABASE_NAME, "r");
     if (!file)
     {
-        printf("File kota.csv tidak ditemukan.\n");
-        return;
+        printf("File gagal dibuka.\n");
+        return -1;
     }
 
-    char line[256];
-    // Skip header
-    fgets(line, sizeof(line), file);
+    int count = 0;
+    Kota kota;
 
-    printf("\nDaftar Kota:\n");
-    printf("==========================\n");
-    printf("%-5s %-20s\n", "ID", "Nama");
-    printf("==========================\n");
-
-    while (fgets(line, sizeof(line), file))
+    while (fscanf(file, KOTA_GETTER_FORMAT, &kota.id, kota.nama) != EOF)
     {
-        int id;
-        char nama[MAX_NAME_KOTA_LENGTH];
-        sscanf(line, "%d,%49[^\n]", &id, nama);
-        printf("%-5d %-20s\n", id, nama);
+        count++;
     }
-
-    printf("==========================\n");
     fclose(file);
+    return count;
 }
 
-// Mencari kota berdasarkan ID di file
-void findKotaById(int id)
+int loadKota(Kota **kotaList)
 {
-    FILE *file = fopen(KOTA_CSV_FILE, "r");
+    FILE *file = fopen(KOTA_DATABASE_NAME, "r");
     if (!file)
     {
-        printf("File kota.csv tidak ditemukan.\n");
-        return;
+        printf("File gagal dibuka.\n");
+        return -1;
     }
 
-    char line[256];
-    // Skip header
-    fgets(line, sizeof(line), file);
+    int count = countKotaData();
 
-    while (fgets(line, sizeof(line), file))
+    *kotaList = (Kota *)malloc(count * sizeof(Kota));
+    if (*kotaList == NULL)
     {
-        int existingId;
-        char nama[MAX_NAME_KOTA_LENGTH];
-        sscanf(line, "%d,%49[^\n]", &existingId, nama);
-        if (existingId == id)
-        {
-            printf("Kota ditemukan: ID: %d, Nama: %s\n", existingId, nama);
-            fclose(file);
-            return;
-        }
-    }
-
-    printf("Kota dengan ID %d tidak ditemukan.\n", id);
-    fclose(file);
-}
-
-// Menyimpan ulang data kota (jika perlu, sebagai backup)
-void saveKotaBackup()
-{
-    FILE *file = fopen(KOTA_CSV_FILE, "r");
-    if (!file)
-    {
-        printf("File kota.csv tidak ditemukan.\n");
-        return;
-    }
-
-    FILE *backup = fopen("kota_backup.csv", "w");
-    if (!backup)
-    {
-        perror("Gagal membuat file backup.");
+        printf("Gagal mengalokasi memori.\n");
         fclose(file);
-        return;
+        return -1;
     }
 
-    char line[256];
-    while (fgets(line, sizeof(line), file))
+    rewind(file);
+    int i = 0;
+
+    while (fscanf(file, KOTA_GETTER_FORMAT, &(*kotaList)[i].id, (*kotaList)[i].nama) != EOF)
     {
-        fputs(line, backup);
+        i++;
     }
 
     fclose(file);
-    fclose(backup);
-    printf("Backup file kota.csv berhasil dibuat sebagai kota_backup.csv.\n");
+    return count;
 }
 
-int updateKota()
+void printKotaTable(Kota *kotaList, int count, int page, int perPage, int selection)
 {
-    FILE *file = fopen(KOTA_CSV_FILE, "r");
-    if (!file)
+    printf("====================================================\n");
+    printf("               Menu Management Kota                 \n");
+    printf("====================================================\n");
+
+    int start = (page - 1) * perPage;
+    int end = start + perPage;
+    if (end > count)
+        end = count;
+
+    int idWidth = 2, namaWidth = 12;
+
+    for (int i = start; i < end; i++)
     {
-        printf("File kota.csv tidak ditemukan.\n");
-        return 0;
+        int idWidthC = snprintf(NULL, 0, "%d", kotaList[i].id);
+        if (idWidthC > idWidth)
+            idWidth = idWidthC;
+
+        if ((int)strlen(kotaList[i].nama) > namaWidth)
+            namaWidth = strlen(kotaList[i].nama);
     }
 
-    FILE *tempFile = fopen(TEMP_KOTA_FILE, "w");
-    if (!tempFile)
+    int tableWidth = snprintf(NULL, 0,
+                              "[ * ]| %-*s | %-*s |\n",
+                              idWidth, "ID",
+                              namaWidth, "Nama Kota");
+
+    // Print table header
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    printf("[ * ]| %-*s | %-*s |\n", idWidth, "ID", namaWidth, "Nama Kota");
+
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Print table rows
+    for (int i = start; i < end; i++)
     {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
-
-    int id;
-    char namaBaru[MAX_NAME_KOTA_LENGTH];
-
-    printf("Masukkan ID Kota yang ingin diperbarui: ");
-    scanf("%d", &id);
-    printf("Masukkan Nama Baru: ");
-    scanf(" %[^\n]", namaBaru);
-
-    char line[256];
-    int found = 0;
-    int isUnique = 1;
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char nama[MAX_NAME_KOTA_LENGTH];
-        sscanf(line, "%d,%49[^\n]", &existingId, nama);
-
-        if (strcmp(nama, namaBaru) == 0 && existingId != id)
+        // Display selected row with a marker
+        if (selection == i + 1)
         {
-            isUnique = 0;
-        }
-
-        if (existingId == id)
-        {
-            fprintf(tempFile, "%d,%s\n", id, namaBaru);
-            found = 1;
+            printf("[ * ]| %-*d | %-*s |\n", idWidth, kotaList[i].id, namaWidth, kotaList[i].nama);
         }
         else
         {
-            fputs(line, tempFile);
+            printf("[   ]| %-*d | %-*s |\n", idWidth, kotaList[i].id, namaWidth, kotaList[i].nama);
         }
     }
 
-    fclose(file);
-    fclose(tempFile);
+    // Print table footer
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
 
-    if (!isUnique)
-    {
-        printf("Gagal memperbarui: Nama kota '%s' sudah ada.\n", namaBaru);
-        remove(TEMP_KOTA_FILE);
-        return 0;
-    }
-
-    if (found)
-    {
-        remove(KOTA_CSV_FILE);
-        rename(TEMP_KOTA_FILE, KOTA_CSV_FILE);
-        printf("Kota dengan ID %d berhasil diperbarui.\n", id);
-    }
-    else
-    {
-        remove(TEMP_KOTA_FILE);
-        printf("Kota dengan ID %d tidak ditemukan.\n", id);
-    }
-
-    return found;
-}
-
-int deleteKota()
-{
-    FILE *file = fopen(KOTA_CSV_FILE, "r");
-    if (!file)
-    {
-        printf("File kota.csv tidak ditemukan.\n");
-        return 0;
-    }
-
-    FILE *tempFile = fopen(TEMP_KOTA_FILE, "w");
-    if (!tempFile)
-    {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
-
-    int id;
-    printf("Masukkan ID Kota yang ingin dihapus: ");
-    scanf("%d", &id);
-
-    char line[256];
-    int found = 0;
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char nama[MAX_NAME_KOTA_LENGTH];
-        sscanf(line, "%d,%49[^\n]", &existingId, nama);
-
-        if (existingId == id)
-        {
-            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
-            printf("ID Kota: %d\nNama Kota: %s\n", existingId, nama);
-            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
-            char confirm;
-            scanf(" %c", &confirm);
-
-            if (confirm == 'y' || confirm == 'Y')
-            {
-                printf("Data dengan ID %d berhasil dihapus.\n", id);
-                found = 1; // Jangan salin baris ini ke file temporary
-            }
-            else
-            {
-                printf("Penghapusan dibatalkan.\n");
-                fputs(line, tempFile); // Salin kembali data jika dibatalkan
-            }
-        }
-        else
-        {
-            fputs(line, tempFile);
-        }
-    }
-
-    fclose(file);
-    fclose(tempFile);
-
-    if (found)
-    {
-        remove(KOTA_CSV_FILE);
-        rename(TEMP_KOTA_FILE, KOTA_CSV_FILE);
-    }
-    else
-    {
-        remove(TEMP_KOTA_FILE);
-        printf("Kota dengan ID %d tidak ditemukan.\n", id);
-    }
-
-    return found;
+    // Display pagination info
+    printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
 }

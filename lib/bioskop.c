@@ -114,7 +114,7 @@ int addBioskop()
 void displayBioskopFromFile()
 {
     FILE *bioskopFile = fopen(BIOSKOP_CSV_FILE, "r");
-    FILE *kotaFile = fopen(KOTA_CSV_FILE, "r");
+    FILE *kotaFile = fopen(KOTA_DATABASE_NAME, "r");
 
     if (!bioskopFile)
     {
