@@ -1,6 +1,7 @@
 #ifndef USER_H
 #define USER_H
 
+
 // ================================== constant ================================== //
 
 #define MAX_USERNAME 255
@@ -8,9 +9,9 @@
 #define MAX_NAME 255
 #define MAX_EMAIL 225
 #define MAX_NOTELP 16
-#define USER_DATABASE_NAME "users.csv"
 #define USER_SETTER_FORMAT "%d,%s,%s,%s,%s,%s,%d\n"
 #define USER_GETTER_FORMAT "%d,%[^,],%[^,],%[^,],%[^,],%[^,],%d\n"
+#define USER_DATABASE_NAME "db/users.csv"
 
 // ================================== type definition ================================== //
 

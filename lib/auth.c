@@ -82,31 +82,80 @@ void registerUser()
     free(newUser);
 }
 
-int loginUser(User **user)
-{
+User *getCurrentUser() {
+    FILE *file = fopen("session.bin", "rb");
+    if (file == NULL) {
+        return NULL;
+    }
+
+    User *sessionUser = (User *)malloc(sizeof(User));
+    if (sessionUser == NULL) {
+        fclose(file);
+        return NULL;
+    }
+
+    size_t readResult = fread(sessionUser, sizeof(User), 1, file);
+    fclose(file);
+
+    if (readResult != 1) {
+        free(sessionUser);
+        return NULL;
+    }
+
+    return sessionUser;
+}
+
+void saveSession(User *user) {
+    FILE *file = fopen("session.bin", "wb");
+    if (file != NULL) {
+        fwrite(user, sizeof(User), 1, file);
+        fclose(file);
+    }
+}
+
+void clearSession() {
+    remove("session.bin");
+}
+
+int loginUser() {
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
 
     printf("Masukkan username: ");
-    fgets(username, sizeof(username), stdin);
+    if (fgets(username, sizeof(username), stdin) == NULL) {
+        return 0;
+    }
     username[strcspn(username, "\n")] = 0;
 
     printf("Masukkan password: ");
-    fgets(password, sizeof(password), stdin);
+    if (fgets(password, sizeof(password), stdin) == NULL) {
+        return 0;
+    }
     password[strcspn(password, "\n")] = 0;
 
-    if (authenticateUser(username, password))
-    {
+    if (authenticateUser(username, password)) {
         User *foundUser = findUserByUsername(username);
-        if (foundUser)
-        {
-            *user = foundUser;
+        if (foundUser != NULL) {
+            saveSession(foundUser);
             free(foundUser);
-            printf("Selamat datang, %s!\n", getName(user));
+            printf("Login berhasil!\n");
             return 1;
         }
     }
 
     printf("Username atau password salah.\n");
     return 0;
+}
+
+int isLogin() {
+    FILE *file = fopen("session.bin", "rb");
+    if (file == NULL) {
+        return 0;
+    }
+
+    User temp;
+    size_t readResult = fread(&temp, sizeof(User), 1, file);
+    fclose(file);
+
+    return (readResult == 1);
 }

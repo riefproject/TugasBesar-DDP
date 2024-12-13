@@ -53,11 +53,37 @@ const char *getName(const User *user) { return user->name; }
 const char *getEmail(const User *user) { return user->email; }
 const char *getNoTelp(const User *user) { return user->notelp; }
 
+// ================================== other ================================== //
+
+User *newUser()
+{
+    User *user = malloc(sizeof(User));
+    if (!user)
+    {
+        return NULL;
+    }
+
+    FILE *file = fopen(USER_DATABASE_NAME, "a");
+
+    if (!file)
+    {
+        free(user);
+        return NULL;
+    }
+    fclose(file);
+
+    user->find = findUser;
+    user->all = allUsers;
+    user->create = createUser;
+    user->update = updateUser;
+    user->destroy = destroyUser;
+
+    return user;
+}
+
 User *findUser(int id)
 {
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "r");
-    free(path);
+    FILE *file = fopen(USER_DATABASE_NAME, "r");
 
     if (!file)
     {
@@ -95,7 +121,7 @@ User *findUser(int id)
 User *findUserByUsername(const char *username)
 {
     // printf("Cek username %s\n", username);
-    FILE *file = fopen("db/users.csv", "r");
+    FILE *file = fopen(USER_DATABASE_NAME, "r");
     if (!file)
     {
         printf("Error ketika membuka file\n");
@@ -110,7 +136,7 @@ User *findUserByUsername(const char *username)
         return NULL;
     }
 
-    while (fscanf(file, USER_GETTER_FORMAT,
+    while (fscanf(file, "%d,%[^,],%[^,],%[^,],%[^,],%[^,],%d\n",
                   &user->id,
                   user->username,
                   user->password,
@@ -136,10 +162,7 @@ User *findUserByUsername(const char *username)
 
 User *allUsers()
 {
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "r");
-    free(path);
-
+    FILE *file = fopen(USER_DATABASE_NAME, "r");
     if (!file)
     {
         return NULL;
@@ -151,7 +174,7 @@ User *allUsers()
     while (!feof(file))
     {
         ch = fgetc(file);
-        if (ch == '\n')
+        if (ch == '\n') 
             lines++;
     }
     rewind(file);
@@ -198,9 +221,7 @@ User *createUser(const char *username, const char *password, const char *name, c
     setNoTelp(user, notelp);
     user->role = role;
 
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "a");
-    free(path);
+    FILE *file = fopen(USER_DATABASE_NAME, "a");
 
     if (!file)
     {
@@ -251,10 +272,7 @@ int updateUser(int id, User newData)
     }
 
     // tulis ulang
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "w");
-    free(path);
-
+    FILE *file = fopen(USER_DATABASE_NAME, "w");
     if (!file)
     {
         free(users);
@@ -281,14 +299,11 @@ int updateUser(int id, User newData)
 int destroyUser(int id)
 {
     int count;
-    User *users = allUsers(&count);
+    User *users = allUsers();
     if (!users)
         return 0;
 
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "w");
-    free(path);
-
+    FILE *file = fopen(USER_DATABASE_NAME, "w");
     if (!file)
     {
         free(users);
@@ -314,32 +329,4 @@ int destroyUser(int id)
     fclose(file);
     free(users);
     return 1;
-}
-
-User *newUser()
-{
-    User *user = malloc(sizeof(User));
-    if (!user)
-    {
-        return NULL;
-    }
-
-    char *path = database(USER_DATABASE_NAME);
-    FILE *file = fopen(path, "a");
-    free(path);
-
-    if (!file)
-    {
-        free(user);
-        return NULL;
-    }
-    fclose(file);
-
-    user->find = findUser;
-    user->all = allUsers;
-    user->create = createUser;
-    user->update = updateUser;
-    user->destroy = destroyUser;
-
-    return user;
 }

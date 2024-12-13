@@ -4,7 +4,17 @@
 #include "user.h"
 
 void registerUser();
-int loginUser(User **user);
+
+int loginUser();
+
+int isLogin();
+
+User *getCurrentUser();
+
+void saveSession(User *user);
+
+void clearSession();
+
 int authenticateUser(const char *username, const char *password);
 
 #endif

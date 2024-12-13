@@ -9,75 +9,144 @@
 
 // ================================== core ================================== //
 
-MenuConfig getGuestMenu() {
-    char *options[] = {
+void guestMenu()
+{
+    int selection;
+    char *menu[] = {
         "Login",
         "Register",
-        "Keluar"
-    };
-    return createMenuConfig(options, 3, "Selamat datang di aplikasi bioskop");
+        "Keluar"};
+
+    while (1)
+    {
+        selection = showMenu(menu, 3, "=== Menu Tamu ===");
+
+        switch (selection)
+        {
+        case 1:
+            loginUser();
+            break;
+        case 2:
+            registerUser();
+            break;
+        case 3:
+            printf("Terima kasih telah menggunakan aplikasi ini!\n");
+            exit(0);
+        default:
+            printf("Pilihan tidak valid!\n");
+            getch();
+        }
+
+        if (isLogin())
+        {
+            break;
+        }
+    }
 }
 
-MenuConfig getUserMenu(User *user) {
-    char *options[] = {
+void userMenu()
+{
+    int selection;
+    char *menu[] = {
         "Tiket ku",
         "Pesan Tiket",
         "Profil",
-        "Logout"
-    };
-    char message[100];
-    sprintf(message, "Hallo, %s", user->name);
-    return createMenuConfig(options, 4, message);
-}
+        "Logout"};
 
-MenuConfig createMenuConfig(char **options, int count, char *message) {
-    MenuConfig config = {options, count, message};
-    return config;
-}
-
-void handleGuestSelection(int selection, User **currentUser) {
-    switch (selection) {
-        case 1: loginUser(currentUser); break;
-        case 2: registerUser(currentUser); break;
-        case 3: exit(0);
-    }
-}
-
-void handleUserSelection(int selection, User **currentUser) {
-    switch (selection) {
-        case 1: printf("Tiket ku\n"); break;
-        case 2: printf("Pesan Tiket\n"); break;
-        case 3: printf("Profil\n"); break;
-        case 4: *currentUser = NULL; break;
-    }
-}
-
-void handleMenu(User **currentUser) {
-    char *menu[255];
-    MenuConfig config;
-    
-    if (*currentUser == NULL) {
-        config = getGuestMenu();
-    } else {
-        config = getUserMenu(*currentUser);
-    }
-    
-    setMenu(menu, config.options, config.count);
-
-    int selection = showMenu(menu, config.count, config.message);
-    
-    if (*currentUser == NULL) {
-        handleGuestSelection(selection, currentUser);
-    } else {
-        handleUserSelection(selection, currentUser);
-    }
-}
-
-void setMenu(char **menu, char **newMenu, int newMenuSize)
-{
-    for (int i = 0; i < newMenuSize; i++)
+    while (1)
     {
-        menu[i] = newMenu[i];
+        selection = showMenu(menu, 4, "=== Menu Pengguna ===");
+
+        switch (selection)
+        {
+        case 1:
+            printf("Menampilkan tiket Anda...\n");
+            getch();
+            break;
+        case 2:
+            printf("Halaman pemesanan tiket...\n");
+            getch();
+            break;
+        case 3:
+            printf("Menampilkan profil...\n");
+            getch();
+            break;
+        case 4:
+            clearSession();
+            printf("Berhasil logout!\n");
+            getch();
+            return;
+        default:
+            printf("Pilihan tidak valid!\n");
+            getch();
+        }
+    }
+}
+
+void adminMenu()
+{
+    int selection;
+    char *menu[] = {
+        "Kelola Pengguna",
+        "Kelola Tiket",
+        "Laporan Penjualan",
+        "Profil Admin",
+        "Logout"};
+
+    while (1)
+    {
+        selection = showMenu(menu, 5, "=== Menu Admin ===");
+
+        switch (selection)
+        {
+        case 1:
+            printf("Menampilkan kelola pengguna...\n");
+            getch();
+            break;
+        case 2:
+            printf("Menampilkan kelola tiket...\n");
+            getch();
+            break;
+        case 3:
+            printf("Menampilkan laporan penjualan...\n");
+            getch();
+            break;
+        case 4:
+            printf("Menampilkan profil admin...\n");
+            getch();
+            break;
+        case 5:
+            clearSession();
+            printf("Berhasil logout!\n");
+            getch();
+            return;
+        default:
+            printf("Pilihan tidak valid!\n");
+            getch();
+        }
+    }
+}
+
+void handleMenu()
+{
+    while (1)
+    {
+        if (!isLogin())
+        {
+            guestMenu();
+        }
+        else
+        {
+            User *user = getCurrentUser();
+            if (user->role == ADMIN)
+            {
+                adminMenu();
+            }
+            else
+            {
+                userMenu();
+            }
+        }
     }
 }
 
@@ -89,27 +158,27 @@ int showMenu(char *menu[], int menuLength, char *menuMessage)
     while (1)
     {
         system("cls");
-
-        printf("%s\n", menuMessage);
+        printf("\n%s\n\n", menuMessage);
 
         for (int i = 0; i < menuLength; i++)
         {
             if (selected == i)
             {
-                printf("-> %s\n", menu[i]);
+                printf("  -> %s\n", menu[i]);
             }
             else
             {
-                printf("   %s\n", menu[i]);
+                printf("     %s\n", menu[i]);
             }
         }
+
+        printf("\nGunakan panah atas/bawah untuk memilih dan Enter untuk memilih\n");
 
         key = getch();
 
         if (key == 224)
         {
             key = getch();
-
             if (key == 72 && selected > 0)
             {
                 selected--;

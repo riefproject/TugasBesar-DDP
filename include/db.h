@@ -7,6 +7,4 @@
 
 int getlastAvalibleID(char *databaseName);
 
-char *database(char *databaseName);
-
 #endif
