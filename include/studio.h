@@ -6,6 +6,9 @@
 #define MAX_STUDIO 100
 #define STUDIO_CSV_FILE "db/studio.csv"
 #define TEMP_STUDIO_FILE "temp_studio.csv"
+#define STUDIO_SETTER_FORMAT "%d,%d,%d,%f\n"
+#define STUDIO_GETTER_FORMAT "%d,%d,%d,%f\n"
+#define STUDIO_DATABASE_NAME "db/users.csv"
 
 typedef struct
 {
@@ -15,34 +18,5 @@ typedef struct
     float additional_fee;
 } Studio;
 
-// Constructor
-Studio createStudio(int id, int bioskop_id, int jumlah_kursi, float additional_fee);
-
-// Getter
-int getStudioId(const Studio *studio);
-int getStudioBioskopId(const Studio *studio);
-int getStudioJumlahKursi(const Studio *studio);
-float getStudioAdditionalFee(const Studio *studio);
-
-// Setter
-void setStudioId(Studio *studio, int id);
-void setStudioBioskopId(Studio *studio, int bioskop_id);
-void setStudioJumlahKursi(Studio *studio, int jumlah_kursi);
-void setStudioAdditionalFee(Studio *studio, float additional_fee);
-
-// Fungsi untuk menambahkan studio baru
-int addStudio();
-
-// Fungsi untuk mencari studio berdasarkan ID
-void findStudioById(int id);
-
-// Fungsi untuk menampilkan daftar studio dari file
-void displayStudioFromFile();
-
-// Fungsi untuk update daftar studio dari file
-int updateStudio();
-
-// Fungsi untuk delete daftar studio dari file
-int deleteStudio();
 
 #endif

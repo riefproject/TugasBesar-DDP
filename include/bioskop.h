@@ -2,45 +2,72 @@
 #define BIOSKOP_H
 
 #include "kota.h"
+#include "user.h"
+
 #define MAX_BIOSKOP_NAME 50
-#define MAX_MANAGER_NAME 50
 #define MAX_BIOSKOP 100
-#define BIOSKOP_CSV_FILE "db/bioskop.csv"
-#define TEMP_BIOSKOP_FILE "temp/temp_bioskop.csv"
+#define MAX_BIOSKOP_ALAMAT 200
+#define BIOSKOP_SETTER_FORMAT "%d,%d,%s,%d,%s\n"
+#define BIOSKOP_GETTER_FORMAT "%d,%d,%[^,],%d,%[^\n]\n"
+#define BIOSKOP_DATABASE_NAME "db/bioskop.csv"
 
 typedef struct
 {
     int id;
-    int kota_id; // Foreign key ke tabel Kota
+    int kota_id;
     char nama[MAX_BIOSKOP_NAME];
-    char manager[MAX_MANAGER_NAME];
+    int manager_id;
+    char alamat[MAX_BIOSKOP_ALAMAT];
 } Bioskop;
 
-// Constructor
-Bioskop createBioskop(int id, int kota_id, const char *nama, const char *manager);
+typedef struct
+{
+    int id;
+    int kota_id;
+    char kota_nama[MAX_KOTA_NAME];
+    char nama[MAX_BIOSKOP_NAME];
+    int manager_id;
+    char manager_name[MAX_USER_NAME];
+    char alamat[MAX_BIOSKOP_ALAMAT];
+    int jumlahStudio;
+    int jumlahFilm;
+    int jumlahTransaksi;
+    int pendapatan;
+} BioskopFullData;
 
-// Getter
+// ================================== Main Menu =================================== //
+
+int menuBioskop();
+void createBioskopMenu();
+void updateBioskopMenu(Bioskop bioskop);
+
+// ================================== Getter ================================== //
+
 int getBioskopId(const Bioskop *bioskop);
 int getBioskopKotaId(const Bioskop *bioskop);
 const char *getBioskopNama(const Bioskop *bioskop);
-const char *getBioskopManager(const Bioskop *bioskop);
+int getBioskopManagerId(const Bioskop *bioskop);
 
-// Setter
+// ================================== Setter ================================== //
+
 void setBioskopId(Bioskop *bioskop, int id);
 void setBioskopKotaId(Bioskop *bioskop, int kota_id);
 void setBioskopNama(Bioskop *bioskop, const char *nama);
-void setBioskopManager(Bioskop *bioskop, const char *manager);
+void setBioskopManagerId(Bioskop *bioskop, int manager_id);
 
-// Fungsi untuk menambahkan bioskop
-int addBioskop();
+// ================================= Action =================================== //
 
-// Fungsi untuk menampilkan daftar bioskop langsung dari file
-void displayBioskopFromFile();
+Bioskop *findBioskopByNama(const char *nama);
+Bioskop *createBioskop(const char *nama, const char *alamat, int kota_id, int manager_id);
+Bioskop *updateBioskop(int id, const char *nama, const char *alamat, int kota_id, int manager_id);
+int deleteBioskop(Bioskop bioskop);
 
-// Fungsi untuk update daftar bioskop langsung dari file
-int updateBioskop();
+// ================================== Utils ================================== //
 
-// Fungsi untuk hapus daftar bioskop langsung dari file
-int deleteBioskop();
+int selectKota();
+int selectManager();
+int countBioskopData();
+int loadBioskop(Bioskop **bioskop);
+void printBioskopTable(Bioskop *bioskop, int count, int page, int perPage, int selection);
 
 #endif

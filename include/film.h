@@ -6,24 +6,23 @@
 #define MAX_FILM_TITLE 100
 #define MAX_GENRE 50
 #define MAX_FILM 100
-#define FILM_CSV_FILE "db/film.csv"
-#define TEMP_FILM_FILE "temp/temp_film.csv"
+#define FILM_SETTER_FORMAT "%d,%d,%s,%s,%s,%d,%d\n"
+#define FILM_GETTER_FORMAT "%d,%d,%[^,],%[^,],%[^,],%d,%d\n"
+#define FILM_DATABASE_NAME "db/films.csv" // Update this to reflect the correct film database
 
 typedef struct
 {
     int id;
-    int bioskop_id; // Foreign key ke tabel Bioskop
+    int bioskop_id; 
     char kode_film[10];
     char judul[MAX_FILM_TITLE];
     char genre[MAX_GENRE];
-    int durasi;   // Durasi dalam menit
-    int tersedia; // Status ketersediaan (1: tersedia, 0: tidak tersedia)
+    int durasi;  
+    int tersedia;
 } Film;
 
-// Constructor
-Film createFilm(int id, int bioskop_id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
+// ================================== Setter ================================== //
 
-// Getter
 int getFilmId(const Film *film);
 int getFilmBioskopId(const Film *film);
 const char *getFilmKode(const Film *film);
@@ -33,7 +32,8 @@ int getFilmDurasi(const Film *film);
 int isFilmTersedia(const Film *film);
 int getFilmDurasiById(int film_id);
 
-// Setter
+// ================================== Getter ================================== //
+
 void setFilmId(Film *film, int id);
 void setFilmBioskopId(Film *film, int bioskop_id);
 void setFilmKode(Film *film, const char *kode_film);
@@ -42,16 +42,23 @@ void setFilmGenre(Film *film, const char *genre);
 void setFilmDurasi(Film *film, int durasi);
 void setFilmTersedia(Film *film, int tersedia);
 
-// Prosedur untuk menampilkan daftar film langsung dari file
-void displayFilmFromFile();
+// ================================== Main Menu ================================ //
 
-// Fungsi untuk menambah film baru
-int addFilm();
+int menuFilm();
+void createFilmMenu();
+void updateFilmMenu(Film film);
 
-// Fungsi untuk update film
-int updateFilm();
+// ================================== Action ================================== //
 
-// Fungsi untuk delete film
-int deleteFilm();
+Film *findFilmByKode(const char *kode_film);
+Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id);
+Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id);
+int deleteFilm(Film film);
+
+// ================================== Utils ================================== //
+
+int countFilmData();
+int loadFilm(Film **films);
+void printFilmTable(Film *films, int count, int page, int perPage, int selection);
 
 #endif

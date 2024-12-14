@@ -5,7 +5,7 @@
 
 #define MAX_USERNAME 255
 #define MAX_PASSWORD 255
-#define MAX_NAME 255
+#define MAX_USER_NAME 255
 #define MAX_EMAIL 225
 #define MAX_NOTELP 16
 #define USER_SETTER_FORMAT "%d,%s,%s,%s,%s,%s,%d\n"
@@ -17,7 +17,8 @@
 typedef struct User User;
 typedef enum
 {
-    ADMIN = 1,
+    SUPER_ADMIN = 0,
+    MANAGER = 1,
     PETUGAS = 2,
     CLIENT = 3
 } Role;
@@ -27,7 +28,7 @@ struct User
     int id;
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
-    char name[MAX_NAME];
+    char name[MAX_USER_NAME];
     char email[MAX_EMAIL];
     char notelp[MAX_NOTELP];
     Role role;
@@ -50,13 +51,13 @@ const char *getNoTelp(const User *user);
 
 // ================================== Main Menu ================================ //
 
-int menuUser();
+int menuUser( );
 void createUserMenu();
 void updateUserMenu(User user);
 
 // ================================== Action ================================== //
 
-User *findUser(int id);
+User *findUserByID(int id);
 User *findUserByUsername(const char *username);
 User *createUser(const char *username, const char *password, const char *name, const char *email, const char *notelp, Role role);
 User *updateUser(const int id, const char *username, const char *password, const char *name, const char *email, const char *notelp, const Role role);
@@ -66,6 +67,7 @@ int deleteUser(User user);
 
 int countUserData();
 int loadUser(User **users);
+int filterUserByRole(User **users, Role role);
 void printUserTable(User *users, int count, int page, int perPage, int selection);
 
 #endif

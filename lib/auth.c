@@ -26,7 +26,7 @@ int authenticateUser(const char *username, const char *password)
 void registerUser()
 {
     char username[MAX_USERNAME], password[MAX_PASSWORD];
-    char confirmPassword[MAX_PASSWORD], name[MAX_NAME];
+    char confirmPassword[MAX_PASSWORD], name[MAX_USER_NAME];
     char email[MAX_EMAIL], notelp[MAX_NOTELP];
 
     while (1)

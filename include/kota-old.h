@@ -1,7 +1,7 @@
 #ifndef KOTA_H
 #define KOTA_H
 
-#define MAX_NAME_KOTA_LENGTH 50
+#define MAX_KOTA_NAME 50
 #define MAX_KOTA 100
 #define TEMP_KOTA_FILE "temp/temp_kota.csv"
 #define KOTA_DATABASE_NAME "db/kota.csv"
@@ -11,7 +11,7 @@
 typedef struct
 {
     int id;
-    char nama[MAX_NAME_KOTA_LENGTH];
+    char nama[MAX_KOTA_NAME];
 } Kota;
 
 // Constructor

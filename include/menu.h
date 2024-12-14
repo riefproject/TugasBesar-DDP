@@ -5,7 +5,7 @@ void gustMenu();
 
 void userMenu();
 
-void adminMenu();
+void superAdminMenu();
 
 void petugasMenu();
 

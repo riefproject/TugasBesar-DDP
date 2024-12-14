@@ -5,6 +5,6 @@
 
 #define DATABASE_PATH "db"
 
-int getlastAvalibleID(char *databaseName);
+int getLastAvailableID(char *databaseName);
 
 #endif

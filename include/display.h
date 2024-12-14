@@ -1,8 +1,6 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "user.h"
-
 #define RESET "\033[0m"
 #define BOLD "\033[1m"
 #define UNDERLINE "\033[4m"
@@ -16,17 +14,5 @@
 #define BG_BLUE "\033[44m"
 #define BG_CYAN "\033[46m"
 #define BG_RED "\033[41m"
-
-// Fungsi untuk menampilkan menu berdasarkan role pengguna
-void showMenuu(User loggedInUser);
-
-// Fungsi untuk menampilkan pesan selamat datang
-void showWelcomeMessage();
-
-// Fungsi untuk menampilkan pesan kesalahan
-void showError(const char *message);
-
-// Fungsi untuk menampilkan data tabel
-void displayTable(const char *headers[], const char *rows[][10], int rowCount, int columnCount);
 
 #endif

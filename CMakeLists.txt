@@ -19,9 +19,8 @@ set(SOURCES
     lib/auth.c
     lib/bioskop.c
     lib/db.c
-    lib/display.c
-    lib/film.c
-    lib/jadwal.c
+    # lib/film.c
+    # lib/jadwal.c
     lib/kota.c
     lib/menu.c
     lib/security.c

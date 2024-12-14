@@ -12,8 +12,8 @@ Kota createKota(int id, const char *nama)
 {
     Kota kota;
     kota.id = id;
-    strncpy(kota.nama, nama, MAX_NAME_KOTA_LENGTH - 1);
-    kota.nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
+    strncpy(kota.nama, nama, MAX_KOTA_NAME - 1);
+    kota.nama[MAX_KOTA_NAME - 1] = '\0';
     return kota;
 }
 
@@ -36,8 +36,8 @@ void setKotaId(Kota *kota, int id)
 
 void setKotaNama(Kota *kota, const char *nama)
 {
-    strncpy(kota->nama, nama, MAX_NAME_KOTA_LENGTH - 1);
-    kota->nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
+    strncpy(kota->nama, nama, MAX_KOTA_NAME - 1);
+    kota->nama[MAX_KOTA_NAME - 1] = '\0';
 }
 
 // Membandingkan string tanpa memperhatikan huruf besar/kecil
@@ -75,7 +75,7 @@ int addKota()
     // Buffer untuk membaca file
     char line[256];
     int id = 0;
-    char nama[MAX_NAME_KOTA_LENGTH];
+    char nama[MAX_KOTA_NAME];
     int isUnique = 1;
 
     // Dapatkan input nama kota dari admin
@@ -89,7 +89,7 @@ int addKota()
     while (fgets(line, sizeof(line), file))
     {
         int existingId;
-        char existingNama[MAX_NAME_KOTA_LENGTH];
+        char existingNama[MAX_KOTA_NAME];
         sscanf(line, "%d,%49[^\n]", &existingId, existingNama);
         id = existingId; // Simpan ID terakhir
         if (caseInsensitiveCompare(existingNama, nama))
@@ -137,7 +137,7 @@ void displayKotaFromFile()
     while (fgets(line, sizeof(line), file))
     {
         int id;
-        char nama[MAX_NAME_KOTA_LENGTH];
+        char nama[MAX_KOTA_NAME];
         sscanf(line, "%d,%49[^\n]", &id, nama);
         printf("%-5d %-20s\n", id, nama);
     }
@@ -163,7 +163,7 @@ void findKotaById(int id)
     while (fgets(line, sizeof(line), file))
     {
         int existingId;
-        char nama[MAX_NAME_KOTA_LENGTH];
+        char nama[MAX_KOTA_NAME];
         sscanf(line, "%d,%49[^\n]", &existingId, nama);
         if (existingId == id)
         {
@@ -212,7 +212,7 @@ void updateKotaMenu(Kota kota)
     printf("                 Menu Edit Kota                     \n");
     printf("====================================================\n" RESET);
 
-    char nama[MAX_NAME_KOTA_LENGTH];
+    char nama[MAX_KOTA_NAME];
     int id = kota.id;
 
     while (1)
@@ -252,7 +252,7 @@ Kota *updateKota(const int id, const char *nama)
     }
 
     // Set the updated values for kota
-    strncpy(updatedKota->nama, nama, MAX_NAME_KOTA_LENGTH);
+    strncpy(updatedKota->nama, nama, MAX_KOTA_NAME);
     updatedKota->id = id;
 
     FILE *fromFile = fopen(KOTA_DATABASE_NAME, "r");

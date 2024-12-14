@@ -1,22 +1,21 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <conio.h>
+#include <unistd.h>
+
+#include "display.h"
+#include "menu.h"
+#include "security.h"
 #include "bioskop.h"
+#include "user.h"
+#include "film.h"
+#include "studio.h"
+#include "kota.h"
+#include "db.h"
 
-// Constructor
-Bioskop createBioskop(int id, int kota_id, const char *nama, const char *manager)
-{
-    Bioskop bioskop;
-    bioskop.id = id;
-    bioskop.kota_id = kota_id;
-    strncpy(bioskop.nama, nama, MAX_BIOSKOP_NAME - 1);
-    bioskop.nama[MAX_BIOSKOP_NAME - 1] = '\0';
-    strncpy(bioskop.manager, manager, MAX_MANAGER_NAME - 1);
-    bioskop.manager[MAX_MANAGER_NAME - 1] = '\0';
-    return bioskop;
-}
+// ================================== Getter ================================== //
 
-// Getter
 int getBioskopId(const Bioskop *bioskop)
 {
     return bioskop->id;
@@ -31,10 +30,16 @@ const char *getBioskopNama(const Bioskop *bioskop)
 }
 const char *getBioskopManager(const Bioskop *bioskop)
 {
-    return bioskop->manager;
+    return findUserByID(bioskop->manager_id)->name;
 }
+const char *getBioskopKota(const Bioskop *bioskop)
+{
+    char *temp = findKotaByID(bioskop->kota_id)->nama;
+    temp[strcspn(temp, "\n")] = 0;
+    return temp;
+}
+// ================================== Setter ================================== //
 
-// Setter
 void setBioskopId(Bioskop *bioskop, int id)
 {
     bioskop->id = id;
@@ -48,289 +53,741 @@ void setBioskopNama(Bioskop *bioskop, const char *nama)
     strncpy(bioskop->nama, nama, MAX_BIOSKOP_NAME - 1);
     bioskop->nama[MAX_BIOSKOP_NAME - 1] = '\0';
 }
-
-int addBioskop()
+void setBioskopAlamat(Bioskop *bioskop, const char *alamat)
 {
-    FILE *file = fopen(BIOSKOP_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
-    if (!file)
+    strncpy(bioskop->alamat, alamat, MAX_BIOSKOP_ALAMAT - 1);
+    bioskop->alamat[MAX_BIOSKOP_ALAMAT - 1] = '\0';
+}
+void setBioskopManagerId(Bioskop *bioskop, int manager_id)
+{
+    bioskop->manager_id = manager_id;
+}
+
+// ================================== Main Menu =================================== //
+
+int menuBioskop()
+{
+    Bioskop *bioskops;
+    int count = loadBioskop(&bioskops);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        // Jika file tidak ada, buat file baru
-        file = fopen(BIOSKOP_CSV_FILE, "w+");
-        if (!file)
+        system("cls");
+
+        selection = (page - 1) * perPage + pointer;
+
+        printf(GREEN "====================================================\n");
+        printf("                 Daftar Bioskop                     \n");
+        printf("====================================================\n" RESET);
+
+        printBioskopTable(bioskops, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
+        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
         {
-            perror("Gagal membuka atau membuat file bioskop.");
+            command = getch();
+
+            if (command == 77 && page * perPage < count)
+            {
+                pointer = 1;
+                page++;
+            }
+            else if (command == 75 && page > 1)
+            {
+                pointer = 1;
+                page--;
+            }
+            else if (command == 72 && pointer > 1)
+            {
+                pointer--;
+            }
+            else if (command == 80 && pointer < perPage && (page - 1) * perPage + pointer < count)
+            {
+                pointer++;
+            }
+        }
+        else if (command == 'C' || command == 'c')
+        {
+            pointer = 1;
+            createBioskopMenu();
+            free(bioskops);
+            count = loadBioskop(&bioskops);
+        }
+        else if (command == 'U' || command == 'u')
+        {
+            pointer = 1;
+            updateBioskopMenu(bioskops[selection - 1]);
+            free(bioskops);
+            count = loadBioskop(&bioskops);
+        }
+        else if (command == 'D' || command == 'd')
+        {
+            pointer = 1;
+            deleteBioskop(bioskops[selection - 1]);
+            free(bioskops);
+            count = loadBioskop(&bioskops);
+        }
+        else if (command == 'E' || command == 'e')
+        {
+            free(bioskops);
             return 0;
         }
-        // Tulis header ke file baru
-        fprintf(file, "id,kota_id,nama,manager\n");
-    }
-
-    char line[256];
-    int id = 0, kota_id;
-    char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
-    int isUnique = 1;
-
-    // Skip header
-    fgets(line, sizeof(line), file);
-
-    // Cek apakah nama sudah ada di file
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char existingNama[MAX_BIOSKOP_NAME];
-        sscanf(line, "%d,%*d,%49[^,],%*s", &existingId, existingNama);
-        id = existingId; // Simpan ID terakhir
-        if (caseInsensitiveCompare(existingNama, nama))
+        else
         {
-            isUnique = 0;
-            break;
+            printf(YELLOW BOLD "Perintah tidak valid!\n" RESET);
+            sleep(1);
         }
     }
-
-    if (!isUnique)
-    {
-        printf("Gagal menambah bioskop: nama bioskop '%s' sudah ada.\n", nama);
-        fclose(file);
-        return 0;
-    }
-
-    // Ambil input dari admin
-    printf("Masukkan ID Kota: ");
-    scanf("%d", &kota_id);
-    printf("Masukkan Nama Bioskop: ");
-    scanf(" %[^\n]", nama);
-    printf("Masukkan Nama Manager: ");
-    scanf(" %[^\n]", manager);
-
-    // Tambahkan bioskop baru
-    id++; // Increment ID terakhir
-    fprintf(file, "%d,%d,%s,%s\n", id, kota_id, nama, manager);
-
-    fclose(file);
-    printf("Bioskop '%s' berhasil ditambahkan dengan ID %d.\n", nama, id);
-    return 1;
 }
 
-void displayBioskopFromFile()
+int selectKota()
 {
-    FILE *bioskopFile = fopen(BIOSKOP_CSV_FILE, "r");
-    FILE *kotaFile = fopen(KOTA_DATABASE_NAME, "r");
+    Kota *kotaList;
+    int count = loadKota(&kotaList);
 
-    if (!bioskopFile)
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        printf("File bioskop.csv tidak ditemukan.\n");
-        return;
-    }
-    if (!kotaFile)
-    {
-        printf("File kota.csv tidak ditemukan.\n");
-        fclose(bioskopFile);
-        return;
-    }
+        selection = (page - 1) * perPage + pointer;
 
-    char bioskopLine[256], kotaLine[256];
-    printf("\nDaftar Bioskop:\n");
-    printf("===================================================\n");
-    printf("%-5s %-20s %-15s %-20s\n", "ID", "Nama", "Kota", "Manager");
-    printf("===================================================\n");
+        printKotaTable(kotaList, count, page, perPage, selection);
 
-    // Lewati header kota
-    fgets(kotaLine, sizeof(kotaLine), kotaFile);
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page\n");
+        printf("[Arrow /\\] | [Arrow \\/] Arrow Up/Down To Selecting\n");
+        printf(GREEN "[ENTER]: Enter To Select Kota\n" RESET);
 
-    // Lewati header bioskop
-    fgets(bioskopLine, sizeof(bioskopLine), bioskopFile);
+        command = getch();
 
-    // Tampilkan data bioskop
-    while (fgets(bioskopLine, sizeof(bioskopLine), bioskopFile))
-    {
-        int id, kota_id;
-        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
-        char kotaNama[MAX_NAME_KOTA_LENGTH] = "Tidak Ditemukan";
-
-        sscanf(bioskopLine, "%d,%d,%49[^,],%49[^\n]", &id, &kota_id, nama, manager);
-
-        // Cari nama kota berdasarkan kota_id
-        rewind(kotaFile);                            // Kembali ke awal file kota
-        fgets(kotaLine, sizeof(kotaLine), kotaFile); // Lewati header
-        while (fgets(kotaLine, sizeof(kotaLine), kotaFile))
+        if (command == 224)
         {
-            int kotaId;
-            char namaKota[MAX_NAME_KOTA_LENGTH];
-            sscanf(kotaLine, "%d,%49[^\n]", &kotaId, namaKota);
-            if (kotaId == kota_id)
+            command = getch();
+
+            if (command == 77)
             {
-                strncpy(kotaNama, namaKota, MAX_NAME_KOTA_LENGTH);
-                break;
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf("Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 75)
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf("Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 72)
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80)
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
             }
         }
-
-        printf("%-5d %-20s %-15s %-20s\n", id, nama, kotaNama, manager);
-    }
-
-    printf("===================================================\n");
-
-    fclose(bioskopFile);
-    fclose(kotaFile);
-}
-
-int updateBioskop()
-{
-    FILE *file = fopen(BIOSKOP_CSV_FILE, "r");
-    if (!file)
-    {
-        printf("File bioskop.csv tidak ditemukan.\n");
-        return 0;
-    }
-
-    FILE *tempFile = fopen(TEMP_BIOSKOP_FILE, "w");
-    if (!tempFile)
-    {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
-
-    int id;
-    char namaBaru[MAX_BIOSKOP_NAME];
-    char managerBaru[MAX_MANAGER_NAME];
-
-    printf("Masukkan ID Bioskop yang ingin diperbarui: ");
-    scanf("%d", &id);
-    printf("Masukkan Nama Baru: ");
-    scanf(" %[^\n]", namaBaru);
-    printf("Masukkan Manager Baru: ");
-    scanf(" %[^\n]", managerBaru);
-
-    char line[256];
-    int found = 0;
-    int isUnique = 1;
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
-        sscanf(line, "%d,%*d,%49[^,],%49[^\n]", &existingId, nama, manager);
-
-        // Validasi unik untuk nama bioskop
-        if (strcmp(nama, namaBaru) == 0 && existingId != id)
+        else if (command == 13)
         {
-            isUnique = 0;
-        }
+            printf("Kota " GREEN "%s" RESET " dipilih\n" RESET, kotaList[selection - 1].nama);
 
-        if (existingId == id)
-        {
-            fprintf(tempFile, "%d,%d,%s,%s\n", id, 0, namaBaru, managerBaru); // 0 sebagai placeholder kota_id
-            found = 1;
+            int kotaID = kotaList[selection - 1].id;
+
+            free(kotaList);
+
+            return kotaID;
         }
         else
         {
-            fputs(line, tempFile);
+            printf(YELLOW BOLD "Command not found\n" RESET);
+            sleep(1);
         }
     }
-
-    fclose(file);
-    fclose(tempFile);
-
-    if (!isUnique)
-    {
-        printf("Gagal memperbarui: Nama bioskop '%s' sudah ada.\n", namaBaru);
-        remove(TEMP_BIOSKOP_FILE);
-        return 0;
-    }
-
-    if (found)
-    {
-        remove(BIOSKOP_CSV_FILE);
-        rename(TEMP_BIOSKOP_FILE, BIOSKOP_CSV_FILE);
-        printf("Bioskop dengan ID %d berhasil diperbarui.\n", id);
-    }
-    else
-    {
-        remove(TEMP_BIOSKOP_FILE);
-        printf("Bioskop dengan ID %d tidak ditemukan.\n", id);
-    }
-
-    return found;
 }
 
-int deleteBioskop()
+int selectManager()
 {
-    FILE *file = fopen(BIOSKOP_CSV_FILE, "r");
-    if (!file)
+    User *users;
+    int count = loadUser(&users);
+
+    count = filterUserByRole(&users, MANAGER);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        printf("File bioskop.csv tidak ditemukan.\n");
-        return 0;
-    }
+        selection = (page - 1) * perPage + pointer;
 
-    FILE *tempFile = fopen(TEMP_BIOSKOP_FILE, "w");
-    if (!tempFile)
-    {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
+        printUserTable(users, count, page, perPage, selection);
 
-    int id;
-    printf("Masukkan ID Bioskop yang ingin dihapus: ");
-    scanf("%d", &id);
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page \n");
+        printf("[Arrow /\\] | [Arrow \\/] Arrow Up/Down To Selecting \n");
+        printf(GREEN "[ENTER]: Enter To Select Manager \n" RESET);
 
-    char line[256];
-    int found = 0;
+        command = getch();
 
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId;
-        char nama[MAX_BIOSKOP_NAME], manager[MAX_MANAGER_NAME];
-        sscanf(line, "%d,%*d,%49[^,],%49[^\n]", &existingId, nama, manager);
-
-        if (existingId == id)
+        if (command == 224)
         {
-            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
-            printf("ID Bioskop: %d\nNama Bioskop: %s\nManager: %s\n", existingId, nama, manager);
-            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
-            char confirm;
-            scanf(" %c", &confirm);
+            command = getch();
 
-            if (confirm == 'y' || confirm == 'Y')
+            if (command == 77)
             {
-                printf("Data dengan ID %d berhasil dihapus.\n", id);
-                found = 1; // Jangan salin baris ini ke file temporary
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf("Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
             }
-            else
+            else if (command == 75)
             {
-                printf("Penghapusan dibatalkan.\n");
-                fputs(line, tempFile); // Salin kembali data jika dibatalkan
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf("Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
             }
+            else if (command == 72)
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80)
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 13)
+        {
+            printf("Manager dengan nama" GREEN " %s \n" RESET, users[selection - 1].name);
+            free(users);
+            return users[selection - 1].id;
         }
         else
         {
-            fputs(line, tempFile);
+            printf(YELLOW BOLD "perintah tidak ditemukan\n" RESET);
+            sleep(1);
+        }
+    }
+}
+
+void createBioskopMenu()
+{
+    system("cls");
+
+    printf(GREEN "====================================================\n");
+    printf("                 Menu Tambah Bioskop                 \n");
+    printf("====================================================\n" RESET);
+
+    char nama[MAX_BIOSKOP_NAME], alamat[MAX_BIOSKOP_ALAMAT];
+    int kota_id, manager_id;
+
+    while (1)
+    {
+        printf("Masukkan nama bioskop: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0; // Hapus newline
+
+        if (strlen(nama) < 3)
+        {
+            printf(RED "Nama bioskop harus memiliki minimal 3 karakter.\n" RESET);
+            continue;
+        }
+
+        Bioskop *bioskop = findBioskopByNama(nama);
+        if (bioskop != NULL)
+        {
+            printf(RED "Nama bioskop sudah terdaftar, silakan gunakan nama lain.\n" RESET);
+            free(bioskop); // Pastikan pointer dilepas jika perlu
+            continue;
+        }
+        break;
+    }
+
+    printf("Masukkan alamat bioskop: ");
+    fgets(alamat, sizeof(alamat), stdin);
+    alamat[strcspn(alamat, "\n")] = 0;
+
+    printf("Pilih Kota: \n");
+    kota_id = selectKota();
+    printf("Pilih manager: \n");
+    manager_id = selectManager();
+
+    Bioskop *newBioskop = createBioskop(nama, alamat, kota_id, manager_id);
+    if (!newBioskop)
+    {
+        printf(RED "Gagal menambahkan bioskop baru.\n" RESET);
+        return;
+    }
+
+    printf(GREEN "Berhasil menambah bioskop!\n" RESET);
+    free(newBioskop);
+}
+
+void updateBioskopMenu(Bioskop bioskop)
+{
+    printf(YELLOW "====================================================\n");
+    printf("                 Menu Edit Bioskop                   \n");
+    printf("====================================================\n" RESET);
+
+    char nama[MAX_BIOSKOP_NAME], alamat[MAX_BIOSKOP_ALAMAT];
+    int kota_id, manager_id;
+
+    while (1)
+    {
+        printf("Masukkan nama bioskop: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0; // Hapus newline
+
+        if (strlen(nama) < 3)
+        {
+            printf(RED "Nama bioskop harus memiliki minimal 3 karakter.\n" RESET);
+            continue;
+        }
+
+        Bioskop *bioskop = findBioskopByNama(nama);
+        if (bioskop != NULL)
+        {
+            printf(RED "Nama bioskop sudah terdaftar, silakan gunakan nama lain.\n" RESET);
+            free(bioskop); // Pastikan pointer dilepas jika perlu
+            continue;
+        }
+        break;
+    }
+
+    printf("Masukkan alamat bioskop: ");
+    fgets(alamat, sizeof(alamat), stdin);
+    alamat[strcspn(alamat, "\n")] = 0;
+
+    printf("Pilih Kota: \n");
+    kota_id = selectKota();
+    printf("Pilih manager: \n");
+    manager_id = selectManager();
+
+    Bioskop *newBioskop = updateBioskop(bioskop.id, nama, alamat, kota_id, manager_id);
+    if (!newBioskop)
+    {
+        printf(RED "Gagal menambahkan bioskop baru.\n" RESET);
+        return;
+    }
+
+    printf(GREEN "Berhasil menambah bioskop!\n" RESET);
+    free(newBioskop);
+}
+
+// ================================= Action =================================== //
+
+Bioskop *findBioskopByNama(const char *nama)
+{
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!file)
+    {
+        return NULL;
+    }
+
+    Bioskop *bioskop = malloc(sizeof(Bioskop));
+    if (!bioskop)
+    {
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, "%d,%[^,]", &bioskop->id, bioskop->nama) == 2)
+    {
+        if (strcmp(bioskop->nama, nama) == 0)
+        {
+            fclose(file);
+            return bioskop;
         }
     }
 
     fclose(file);
-    fclose(tempFile);
+    free(bioskop);
+    return NULL;
+}
 
-    if (found)
+Bioskop *createBioskop(const char *nama, const char *alamat, const int kota_id, const int manager_id)
+{
+    Bioskop *bioskop = malloc(sizeof(Bioskop));
+    if (!bioskop)
     {
-        remove(BIOSKOP_CSV_FILE);
-        rename(TEMP_BIOSKOP_FILE, BIOSKOP_CSV_FILE);
-    }
-    else
-    {
-        remove(TEMP_BIOSKOP_FILE);
-        printf("Bioskop dengan ID %d tidak ditemukan.\n", id);
+        printf("Alokasi memori gagal, lokasi: createBioskop\n");
+        return NULL;
     }
 
-    return found;
+    setBioskopNama(bioskop, nama);
+    setBioskopAlamat(bioskop, alamat);
+    setBioskopKotaId(bioskop, kota_id);
+    setBioskopId(bioskop, getLastAvailableID(BIOSKOP_DATABASE_NAME));
+    setBioskopManagerId(bioskop, manager_id);
+
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "a");
+    if (!file)
+    {
+        printf("Gagal membuka file untuk menulis data bioskop\n");
+        free(bioskop);
+        return NULL;
+    }
+
+    fprintf(file, BIOSKOP_SETTER_FORMAT,
+            bioskop->id,
+            bioskop->kota_id,
+            bioskop->nama,
+            bioskop->manager_id,
+            bioskop->alamat);
+
+    fclose(file);
+    return bioskop;
+}
+
+Bioskop *updateBioskop(const int id, const char *nama, const char *alamat, const int kota_id, const int manager_id)
+{
+    Bioskop *updatedBioskop = malloc(sizeof(Bioskop));
+    if (!updatedBioskop)
+    {
+        printf("Alokasi memori gagal, lokasi: updateBioskop\n");
+        return NULL;
+    }
+
+    // Mengisi data baru menggunakan setter
+    setBioskopId(updatedBioskop, id);
+    setBioskopNama(updatedBioskop, nama);
+    setBioskopAlamat(updatedBioskop, alamat);
+    setBioskopKotaId(updatedBioskop, kota_id);
+    setBioskopManagerId(updatedBioskop, manager_id);
+
+    // Membuka file database untuk membaca data
+    FILE *fromFile = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        printf("Gagal membuka file untuk membaca data, lokasi: updateBioskop\n");
+        free(updatedBioskop);
+        return NULL;
+    }
+
+    int count = countBioskopData();
+    if (count == -1)
+    {
+        printf("Penghitungan data bioskop gagal, lokasi: updateBioskop\n");
+        fclose(fromFile);
+        free(updatedBioskop);
+        return NULL;
+    }
+
+    int i = 0;
+    Bioskop bioskops[count];
+
+    // Membaca semua data dari file ke array bioskops
+    while (fscanf(fromFile, BIOSKOP_GETTER_FORMAT,
+                  &bioskops[i].id,
+                  &bioskops[i].kota_id,
+                  bioskops[i].nama,
+                  &bioskops[i].manager_id,
+                  bioskops[i].alamat) != EOF)
+    {
+        // Memperbarui data jika ID cocok
+        if (bioskops[i].id == id)
+        {
+            bioskops[i] = *updatedBioskop;
+        }
+        i++;
+    }
+    fclose(fromFile);
+
+    // Membuka file database untuk menulis ulang data
+    FILE *toFile = fopen(BIOSKOP_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf("Gagal membuka file untuk menulis data, lokasi: updateBioskop\n");
+        free(updatedBioskop);
+        return NULL;
+    }
+
+    // Menulis kembali data bioskop ke file
+    for (i = 0; i < count; i++)
+    {
+        fprintf(toFile, BIOSKOP_SETTER_FORMAT,
+                bioskops[i].id,
+                bioskops[i].kota_id,
+                bioskops[i].nama,
+                bioskops[i].manager_id,
+                bioskops[i].alamat);
+    }
+
+    fclose(toFile);
+    return updatedBioskop;
+}
+
+int deleteBioskop(Bioskop bioskop)
+{
+    // Buat pesan konfirmasi
+    int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus data bioskop dengan nama '%s'?\n", bioskop.nama) + 1;
+    char *head = malloc(len);
+    if (!head)
+    {
+        printf(RED "Gagal mengalokasikan memori.\n" RESET);
+        sleep(1);
+        return -1;
+    }
+    snprintf(head, len, "Apakah Anda yakin ingin menghapus data bioskop dengan nama '%s'?\n", bioskop.nama);
+
+    char *menu[] = {
+        "Tidak, Batalkan",
+        "Ya, Hapus",
+    };
+
+    char *header[] = {
+        RED BOLD "====================================================\n",
+        "             Konfirmasi Hapus Bioskop               \n",
+        "====================================================\n\n" RESET,
+        head,
+        NULL};
+
+    int selection = showMenu(menu, 2, header);
+    free(head);
+
+    if (selection == 1)
+    {
+        return 1; // Pembatalan oleh pengguna
+    }
+
+    // Cadangkan data bioskop
+    FILE *fromFile = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        printf(RED "Gagal membuka file, lokasi: deleteBioskop.\n" RESET);
+        sleep(1);
+        return -1;
+    }
+
+    int count = countBioskopData();
+    if (count == -1)
+    {
+        printf(RED "Penghitungan data bioskop gagal, lokasi: deleteBioskop.\n" RESET);
+        fclose(fromFile);
+        return -1;
+    }
+
+    Bioskop bioskops[count], temp;
+    int i = 0;
+
+    while (fscanf(fromFile, BIOSKOP_GETTER_FORMAT,
+                  &temp.id,
+                  &temp.kota_id,
+                  temp.nama,
+                  &temp.manager_id,
+                  temp.alamat) != EOF)
+    {
+        if (temp.id != bioskop.id)
+        {
+            bioskops[i] = temp;
+            i++;
+        }
+    }
+    fclose(fromFile);
+
+    // Menulis ulang file dengan data bioskop yang diperbarui
+    FILE *toFile = fopen(BIOSKOP_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf(RED "Gagal membuka file untuk ditulis, lokasi: deleteBioskop.\n" RESET);
+        return -1;
+    }
+
+    for (int j = 0; j < i; j++)
+    {
+        fprintf(toFile, BIOSKOP_SETTER_FORMAT,
+                bioskops[j].id,
+                bioskops[j].kota_id,
+                bioskops[j].nama,
+                bioskops[j].manager_id,
+                bioskops[j].alamat);
+    }
+
+    fclose(toFile);
+
+    return 1; // Berhasil
+}
+
+// ================================== Utils ================================== //
+
+int countBioskopData()
+{
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    Bioskop bioskop;
+    int count = 0;
+
+    if (file == NULL)
+    {
+        printf("Error: File tidak dapat dibuka\n");
+        return 1;
+    }
+
+    while (fscanf(file, BIOSKOP_GETTER_FORMAT,
+                  &bioskop.id,
+                  &bioskop.kota_id,
+                  bioskop.nama,
+                  &bioskop.manager_id,
+                  bioskop.alamat) != EOF)
+    {
+        count++;
+    }
+
+    fclose(file);
+    return count;
+}
+
+int loadBioskop(Bioskop **bioskops)
+{
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int count = countBioskopData();
+
+    *bioskops = (Bioskop *)malloc(count * sizeof(Bioskop));
+    if (*bioskops == NULL)
+    {
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
+
+    rewind(file);
+
+    int i = 0;
+
+    while (fscanf(file, BIOSKOP_GETTER_FORMAT,
+                  &(*bioskops)[i].id,
+                  &(*bioskops)[i].kota_id,
+                  (*bioskops)[i].nama,
+                  &(*bioskops)[i].manager_id,
+                  (*bioskops)[i].alamat) != EOF)
+    {
+        i++;
+    }
+
+    fclose(file);
+    return count;
+}
+
+void printBioskopTable(Bioskop *bioskops, int count, int page, int perPage, int selection)
+{
+    int idWidth = 2, kotaWidth = 7, namaWidth = 12, managerWidth = 7;
+
+    int start = (page - 1) * perPage;
+    int end = start + perPage;
+    if (end > count)
+        end = count;
+
+    // Hitung panjang kolom terpanjang
+    for (int i = start; i < end; i++)
+    {
+        int idLen = snprintf(NULL, 0, "%d", bioskops[i].id);
+        if (idLen > idWidth)
+            idWidth = idLen;
+
+        if ((int)strlen(bioskops[i].nama) > namaWidth)
+            namaWidth = strlen(bioskops[i].nama);
+
+        if ((int)strlen(getBioskopManager(&bioskops[i])) > managerWidth)
+            managerWidth = strlen(getBioskopManager(&bioskops[i]));
+
+        if ((int)strlen(getBioskopKota(&bioskops[i])) > kotaWidth)
+            kotaWidth = strlen(getBioskopKota(&bioskops[i]));
+    }
+
+    int tableWidth = snprintf(NULL, 0,
+                              "[ * ]| %-*s | %-*s | %-*s | %-*s |\n",
+                              idWidth, "ID",
+                              kotaWidth, "Kota",
+                              namaWidth, "Nama Bioskop",
+                              managerWidth, "Manager");
+
+    // Cetak garis atas tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak header tabel
+    printf("[ * ]| %-*s | %-*s | %-*s | %-*s |\n",
+           idWidth, "ID",
+           kotaWidth, "Kota",
+           namaWidth, "Nama Bioskop",
+           managerWidth, "Manager");
+
+    // Cetak garis bawah header
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak isi tabel
+    for (int i = start; i < end; i++)
+    {
+        if (selection == i + 1)
+        {
+            printf(BLUE BOLD "[ * ]| %-*d | %-*s | %-*s | %-*s |\n" RESET,
+                   idWidth, bioskops[i].id,
+                   kotaWidth, getBioskopKota(&bioskops[i]),
+                   namaWidth, bioskops[i].nama,
+                   managerWidth, getBioskopManager(&bioskops[i]));
+        }
+        else
+        {
+            printf("[   ]| %-*d | %-*s | %-*s | %-*s |\n",
+                   idWidth, bioskops[i].id,
+                   kotaWidth, getBioskopKota(&bioskops[i]),
+                   namaWidth, bioskops[i].nama,
+                   managerWidth, getBioskopManager(&bioskops[i]));
+        }
+    }
+
+    // Cetak garis bawah tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Informasi halaman
+    printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
 }

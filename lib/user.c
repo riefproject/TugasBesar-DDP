@@ -66,6 +66,16 @@ int menuUser()
     User *users;
     int count = loadUser(&users);
 
+    if (getCurrentUser()->role == MANAGER)
+    {
+        filterUserByRole(&users, PETUGAS);
+    }
+
+    if (getCurrentUser()->role == PETUGAS)
+    {
+        filterUserByRole(&users, CLIENT);
+    }
+
     int page = 1, perPage = 10, selection = 1, pointer = 1;
     int command;
 
@@ -74,10 +84,14 @@ int menuUser()
         system("cls");
         selection = (page - 1) * perPage + pointer;
 
+        printf(GREEN "====================================================\n");
+        printf("             Menu Management Pengguna               \n");
+        printf("====================================================\n" RESET);
+
         printUserTable(users, count, page, perPage, selection);
 
         printf("[Arrow >] Next Page | [Arrow <] Previous Page");
-        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit\n" RESET);
+        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit" RESET "\n" RESET);
 
         command = getch();
 
@@ -92,8 +106,8 @@ int menuUser()
                     page++;
                 else
                 {
-                    printf("Sudah di halaman terakhir.\n");
-                    sleep(500);
+                    printf(BLUE "Sudah di halaman terakhir.\n");
+                    sleep(1);
                 }
             }
             else if (command == 75)
@@ -103,8 +117,8 @@ int menuUser()
                     page--;
                 else
                 {
-                    printf("Sudah di halaman pertama.\n");
-                    sleep(500);
+                    printf(BLUE "Sudah di halaman pertama.\n");
+                    sleep(1);
                 }
             }
             else if (command == 72)
@@ -157,7 +171,7 @@ int menuUser()
         else
         {
             printf(YELLOW BOLD "perintah tidak ditemukan\n" RESET);
-            sleep(500);
+            sleep(1);
         }
     }
 }
@@ -171,7 +185,7 @@ void createUserMenu()
     printf("====================================================\n" RESET);
 
     char username[MAX_USERNAME], password[MAX_PASSWORD];
-    char confirmPassword[MAX_PASSWORD], name[MAX_NAME];
+    char confirmPassword[MAX_PASSWORD], name[MAX_USER_NAME];
     char email[MAX_EMAIL], notelp[MAX_NOTELP];
     int role = 0;
 
@@ -229,21 +243,33 @@ void createUserMenu()
     fgets(notelp, sizeof(notelp), stdin);
     notelp[strcspn(notelp, "\n")] = 0;
 
-    printf(
-        "=================\n"
-        "| No | Role     |\n"
-        "=================\n"
-        "| 1  | Petugas  |\n"
-        "| 2  | Client   |\n"
-        "=================\n");
-
-    printf("Pilih role\t: ");
-    scanf("%d", &role);
-
+    int limitRole = 0;
+    printf("Pilih role \n: ");
     while (role < 1 || role > 2)
     {
-        printf(RED BOLD "Input tidak valid. Pilih role antara 1-2: " RESET);
+        printf("=================\n");
+        printf("| No | Role     |\n");
+        printf("=================\n");
+        if (getCurrentUser()->role == SUPER_ADMIN)
+        {
+            printf("| 1 | Manager   |\n");
+            printf("| 2 | Petugas   |\n");
+            limitRole = 1;
+        }
+        if (getCurrentUser()->role == MANAGER)
+        {
+            printf("| 2 | Petugas   |\n");
+            limitRole = 2;
+        }
+        printf("=================\n");
+
         scanf("%d", &role);
+
+        if (role >= limitRole && role <= 2)
+        {
+            break;
+        }
+        printf(RED BOLD "Harap pilih role yang tersedia!\n" RESET);
     }
 
     User *newUser = createUser(username, password, name, email, notelp, role);
@@ -265,9 +291,8 @@ void updateUserMenu(User user)
     printf("====================================================\n" RESET);
 
     char username[MAX_USERNAME], password[MAX_PASSWORD];
-    char confirmPassword[MAX_PASSWORD], name[MAX_NAME];
+    char confirmPassword[MAX_PASSWORD], name[MAX_USER_NAME];
     char email[MAX_EMAIL], notelp[MAX_NOTELP];
-    int role = 0;
 
     while (1)
     {
@@ -337,7 +362,7 @@ void updateUserMenu(User user)
 
 // ==================================== Action ====================================//
 
-User *findUser(int id)
+User *findUserByID(int id)
 {
     FILE *file = fopen(USER_DATABASE_NAME, "r");
 
@@ -440,7 +465,7 @@ User *createUser(const char *username, const char *password, const char *name, c
         return NULL;
     }
 
-    int id = getlastAvalibleID(USER_DATABASE_NAME);
+    int id = getLastAvailableID(USER_DATABASE_NAME);
     user->id = id;
 
     fprintf(file, USER_SETTER_FORMAT,
@@ -530,14 +555,6 @@ User *updateUser(const int id, const char *username, const char *password, const
 
 int deleteUser(User user)
 {
-    if (user.role == ADMIN)
-    {
-        printf(RED "Anda tidak dapat menghapus admin.\n" RESET);
-        sleep(1);
-
-        return -1;
-    }
-
     // Buat pesan konfirmasi
     int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus data user dengan username '%s'?\n", user.username) + 1;
     char *head = malloc(len);
@@ -703,10 +720,6 @@ int loadUser(User **users)
 
 void printUserTable(User *users, int count, int page, int perPage, int selection)
 {
-    printf(GREEN "====================================================\n");
-    printf("             Menu Management Pengguna               \n");
-    printf("====================================================\n" RESET);
-
     int idWidth = 2, usernameWidth = 8, nameWidth = 4;
     int emailWidth = 5, notelpWidth = 6, roleWidth = 8; // Role membutuhkan setidaknya panjang 8 untuk "Pelanggan"
 
@@ -767,7 +780,7 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
         switch (users[i].role)
         {
         case 1:
-            roleString = "Admin";
+            roleString = "Manager";
             break;
         case 2:
             roleString = "Petugas";
@@ -782,7 +795,7 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
         // Tampilkan dengan penanda jika dipilih
         if (selection == i + 1)
         {
-            printf("[ * ]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+            printf(BLUE BOLD "[ * ]| %-*d | %-*s | %-*s | %-*s | %-*s | %-*s |\n" RESET,
                    idWidth, users[i].id,
                    usernameWidth, users[i].username,
                    nameWidth, users[i].name,
@@ -809,4 +822,66 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
 
     // Informasi halaman
     printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
+}
+
+int filterUserByRole(User **users, Role role)
+{
+    FILE *file = fopen(USER_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int totalCount = countUserData();
+
+    User *allUsers = (User *)malloc(totalCount * sizeof(User));
+    if (allUsers == NULL)
+    {
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
+
+    int i = 0, validCount = 0;
+
+    // Membaca semua data dari file
+    while (fscanf(file, USER_GETTER_FORMAT,
+                  &allUsers[i].id,
+                  allUsers[i].username,
+                  allUsers[i].password,
+                  allUsers[i].name,
+                  allUsers[i].email,
+                  allUsers[i].notelp,
+                  &allUsers[i].role) != EOF)
+    {
+        if (allUsers[i].role == role)
+        {
+            validCount++;
+        }
+        i++;
+    }
+
+    fclose(file);
+
+    *users = (User *)malloc(validCount * sizeof(User));
+    if (*users == NULL)
+    {
+        printf("Gagal mengalokasi memori untuk hasil filter.\n");
+        free(allUsers);
+        return -1;
+    }
+
+    int j = 0;
+    for (i = 0; i < totalCount; i++)
+    {
+        if (allUsers[i].role == role)
+        {
+            (*users)[j] = allUsers[i];
+            j++;
+        }
+    }
+
+    free(allUsers);
+    return validCount;
 }

@@ -5,7 +5,7 @@
 #include "db.h"
 #define USER_DATABASE_NAME "db/users.csv"
 
-int getlastAvalibleID(char *databaseName)
+int getLastAvailableID(char *databaseName)
 {
     int count = 0;
     char c;

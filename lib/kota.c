@@ -42,6 +42,10 @@ int menuKota()
         system("cls");
         selection = (page - 1) * perPage + pointer;
 
+        printf("====================================================\n");
+        printf("               Menu Management Kota                 \n");
+        printf("====================================================\n");
+
         printKotaTable(kotaList, count, page, perPage, selection);
 
         printf("[Arrow >] Next Page | [Arrow <] Previous Page");
@@ -138,7 +142,7 @@ void createKotaMenu()
     printf("                Menu Tambah Kota                    \n");
     printf("====================================================\n" RESET);
 
-    char nama[MAX_NAME_KOTA_LENGTH];
+    char nama[MAX_KOTA_NAME];
 
     while (1)
     {
@@ -174,7 +178,7 @@ void updateKotaMenu(Kota kota)
     printf("                 Menu Edit Kota                     \n");
     printf("====================================================\n" RESET);
 
-    char nama[MAX_NAME_KOTA_LENGTH];
+    char nama[MAX_KOTA_NAME];
     int id = kota.id;
 
     while (1)
@@ -205,6 +209,63 @@ void updateKotaMenu(Kota kota)
 }
 
 // ================================== Action ================================== //
+Kota *findKotaByID(int id)
+{
+    FILE *file = fopen(KOTA_DATABASE_NAME, "r");
+
+    if (!file)
+    {
+        return NULL;
+    }
+
+    Kota *kota = malloc(sizeof(Kota));
+    if (!kota)
+    {
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, "%d,%[^,]", &kota->id, kota->nama) == 2)
+    {
+        if (kota->id == id)
+        {
+            fclose(file);
+            return kota;
+        }
+    }
+
+    fclose(file);
+    free(kota);
+    return NULL;
+}
+Kota *findKotaByName(const char *nama)
+{
+    FILE *file = fopen(KOTA_DATABASE_NAME, "r");
+    if (!file)
+    {
+        return NULL;
+    }
+
+    Kota *kota = malloc(sizeof(Kota));
+    if (!kota)
+    {
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, "%d,%[^,]", &kota->id, kota->nama) == 2)
+    {
+        if (strcmp(kota->nama, nama) == 0)
+        {
+            fclose(file);
+            return kota;
+        }
+    }
+
+    fclose(file);
+    free(kota);
+    return NULL;
+}
 
 Kota *createKota(const char *nama)
 {
@@ -215,8 +276,8 @@ Kota *createKota(const char *nama)
         return NULL;
     }
 
-    strncpy(kota->nama, nama, MAX_NAME_KOTA_LENGTH);
-    kota->nama[MAX_NAME_KOTA_LENGTH - 1] = '\0';
+    strncpy(kota->nama, nama, MAX_KOTA_NAME);
+    kota->nama[MAX_KOTA_NAME - 1] = '\0';
 
     FILE *file = fopen(KOTA_DATABASE_NAME, "a");
     if (!file)
@@ -226,7 +287,7 @@ Kota *createKota(const char *nama)
         return NULL;
     }
 
-    int id = getlastAvalibleID(KOTA_DATABASE_NAME);
+    int id = getLastAvailableID(KOTA_DATABASE_NAME);
     kota->id = id;
 
     fprintf(file, KOTA_SETTER_FORMAT,
@@ -246,7 +307,7 @@ Kota *updateKota(const int id, const char *nama)
         return NULL;
     }
 
-    strncpy(updatedKota->nama, nama, MAX_NAME_KOTA_LENGTH);
+    strncpy(updatedKota->nama, nama, MAX_KOTA_NAME);
     updatedKota->id = id;
 
     FILE *fromFile = fopen(KOTA_DATABASE_NAME, "r");
@@ -434,12 +495,8 @@ int loadKota(Kota **kotaList)
     return count;
 }
 
-void printKotaTable(Kota *kotaList, int count, int page, int perPage, int selection)
+void printKotaTable(const Kota *kotaList, int count, int page, int perPage, int selection)
 {
-    printf("====================================================\n");
-    printf("               Menu Management Kota                 \n");
-    printf("====================================================\n");
-
     int start = (page - 1) * perPage;
     int end = start + perPage;
     if (end > count)

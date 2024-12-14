@@ -4,10 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "display.h"
-#include "menu.h"
-#include "user.h"
-#include "auth.h"
+#include "all.h"
 
 // ================================== core ================================== //
 
@@ -98,7 +95,7 @@ void userMenu()
     }
 }
 
-void adminMenu()
+void superAdminMenu()
 {
     int selection;
     char *menu[] = {
@@ -110,7 +107,6 @@ void adminMenu()
         "Kelola Jadwal",
         "Kelola Tiket",
         "Laporan Penjualan",
-        "Profil Admin",
         "Logout",
     };
 
@@ -137,7 +133,7 @@ void adminMenu()
             break;
         case 3:
             printf("Menampilkan Kelola Bioskop...\n");
-            // menuCinema();
+            menuBioskop();
             break;
         case 4:
             printf("Menampilkan Kelola Studio...\n");
@@ -158,10 +154,6 @@ void adminMenu()
         case 8:
             printf("Menampilkan Laporan Penjualan...\n");
             // salesReport();
-            break;
-        case 9:
-            printf("Menampilkan Profil Admin...\n");
-            // profileAdmin();
             break;
         case 10:
             clearSession();
@@ -188,9 +180,9 @@ void handleMenu()
         else
         {
             User *user = getCurrentUser();
-            if (user->role == ADMIN)
+            if (user->role == SUPER_ADMIN)
             {
-                adminMenu();
+                superAdminMenu();
             }
             else if (user->role == PETUGAS)
             {
