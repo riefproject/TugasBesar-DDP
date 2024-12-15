@@ -1,0 +1,34 @@
+BEGIN
+    // Login page
+    LOGIN PAGE;
+    IF choise = Login THEN
+        IF Role user = Super_Admin THEN
+            //Tampilan Super Admin
+            Kelola Data Master;
+            Pantau Laporan Pendapatan seluruh bioskop;
+        ELSE
+            IF Role user = Manager  THEN
+                //Tampilan Manager
+                Kelola Data Petugas;
+                Pantau pendapatan bioskop;
+            ELSE
+                IF Role user = Petugas THEN
+                Keloladata bioskop;
+                Layani transaksi offline;
+                ELSE
+                    IF Role user = konsumen THEN
+                    PEsan tiket offline;
+                    ENDIF
+                ENDIF
+            ENDIF
+        ENDIF    
+    ELSEIF choise = Register THEN
+        Menu registrasi (konsumen)
+    ENDIF
+
+    LOGOUT
+        
+            
+                
+        
+END
