@@ -179,7 +179,7 @@ void managerMenu()
             break;
         case 3:
             printf("Menampilkan Kelola Jadwal...\n");
-            // menuSchedule();
+            menuJadwal();
             break;
         case 4:
             printf("Menampilkan Laporan Penjualan...\n");
@@ -197,6 +197,53 @@ void managerMenu()
 
 void petugasMenu()
 {
+    int selection;
+    char *menu[] = {
+        "Lihat Studio",
+        "Lihat Film",
+        "Lihat Jadwal",
+        "Transaksi"
+        "Laporan Penjualan",
+        "Logout",
+    };
+
+    char *header[] = {
+        "====================================================\n",
+        "      Selamat datang di Sistem Pemesanan Tiket!      \n",
+        "====================================================\n" RESET,
+        NULL,
+    };
+
+    while (1)
+    {
+        selection = showMenu(menu, 5, header);
+
+        switch (selection)
+        {
+        case 1:
+            printf("Menampilkan Kelola Studio...\n");
+            menuStudio();
+            break;
+        case 2:
+            printf("Menampilkan Kelola Film...\n");
+            menuFilm();
+            break;
+        case 3:
+            printf("Menampilkan Kelola Jadwal...\n");
+            menuJadwal();
+            break;
+        case 4:
+            printf("Menampilkan Laporan Penjualan...\n");
+            // salesReport();
+            break;
+        case 5:
+            clearSession();
+            printf("Berhasil logout!\n");
+            return;
+        default:
+            printf(RED "Pilihan tidak valid!\n" RESET);
+        }
+    }
 }
 
 void handleMenu()
@@ -213,6 +260,10 @@ void handleMenu()
             if (user->role == SUPER_ADMIN)
             {
                 superAdminMenu();
+            }
+            else if (user->role == MANAGER)
+            {
+                managerMenu();
             }
             else if (user->role == PETUGAS)
             {
