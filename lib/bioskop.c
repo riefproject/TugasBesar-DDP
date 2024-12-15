@@ -35,6 +35,8 @@ const char *getBioskopManager(const Bioskop *bioskop)
 const char *getBioskopKota(const Bioskop *bioskop)
 {
     char *temp = findKotaByID(bioskop->kota_id)->nama;
+    printf("%s", temp);
+    sleep(10);
     temp[strcspn(temp, "\n")] = 0;
     return temp;
 }
@@ -117,28 +119,27 @@ int menuBioskop()
         else if (command == 'C' || command == 'c')
         {
             createBioskopMenu();
-            free(bioskops);
+            // free(bioskops);
             count = loadBioskop(&bioskops);
             pointer = 1;
         }
         else if (command == 'U' || command == 'u')
         {
             updateBioskopMenu(bioskops[selection - 1]);
-            free(bioskops);
+            // free(bioskops);
             count = loadBioskop(&bioskops);
             pointer = 1;
         }
         else if (command == 'D' || command == 'd')
         {
             deleteBioskop(bioskops[selection - 1]);
-            free(bioskops);
+            // free(bioskops);
             count = loadBioskop(&bioskops);
             pointer = 1;
         }
         else if (command == 'E' || command == 'e')
         {
-            free(bioskops);
-            return 0;
+            break;
         }
         else
         {
@@ -743,6 +744,7 @@ int countBioskopData()
 
 int loadBioskop(Bioskop **bioskops)
 {
+
     FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
     if (!file)
     {
@@ -786,7 +788,6 @@ void printBioskopTable(Bioskop *bioskops, int count, int page, int perPage, int 
     int end = start + perPage;
     if (end > count)
         end = count;
-
     // Hitung panjang kolom terpanjang
     for (int i = start; i < end; i++)
     {
@@ -797,11 +798,15 @@ void printBioskopTable(Bioskop *bioskops, int count, int page, int perPage, int 
         if ((int)strlen(bioskops[i].nama) > namaWidth)
             namaWidth = strlen(bioskops[i].nama);
 
-        if ((int)strlen(getBioskopManager(&bioskops[i])) > managerWidth)
-            managerWidth = strlen(getBioskopManager(&bioskops[i]));
+        char *manager = getBioskopManager(&bioskops[i]);
 
-        if ((int)strlen(getBioskopKota(&bioskops[i])) > kotaWidth)
-            kotaWidth = strlen(getBioskopKota(&bioskops[i]));
+        if ((int)strlen(manager) > managerWidth)
+            managerWidth = strlen(manager);
+
+        char *kota = getBioskopKota(&bioskops[i]);
+
+        if ((int)strlen(kota) > kotaWidth)
+            kotaWidth = strlen(kota);
     }
 
     int tableWidth = snprintf(NULL, 0,

@@ -216,30 +216,33 @@ void updateKotaMenu(Kota kota)
 Kota *findKotaByID(int id)
 {
     FILE *file = fopen(KOTA_DATABASE_NAME, "r");
-
     if (!file)
     {
+        printf("Gagal membuka file database kota.\n");
         return NULL;
     }
 
-    Kota *kota = malloc(sizeof(Kota));
+    Kota *kota = malloc(sizeof(Kota)); // Alokasi dinamis memori untuk objek Kota
     if (!kota)
     {
+        printf("Gagal mengalokasikan memori untuk Kota.\n");
         fclose(file);
         return NULL;
     }
 
-    while (fscanf(file, "%d,%[^,]", &kota->id, kota->nama) == 2)
+    // Cari kota berdasarkan ID
+    while (fscanf(file, KOTA_GETTER_FORMAT, &kota->id, kota->nama) != EOF)
     {
         if (kota->id == id)
         {
             fclose(file);
-            return kota;
+            return kota; // Kembalikan pointer ke Kota
         }
     }
 
+    // Tidak ditemukan
     fclose(file);
-    free(kota);
+    free(kota); // Bebaskan memori jika tidak ada kota yang cocok
     return NULL;
 }
 
@@ -268,7 +271,7 @@ Kota *findKotaByName(const char *nama)
     }
 
     fclose(file);
-    free(kota);
+    // free(kota);
     return NULL;
 }
 
@@ -293,7 +296,7 @@ Kota *createKota(const char *nama)
     }
 
     int id = getLastAvailableID(KOTA_DATABASE_NAME);
-    
+
     kota->id = id;
 
     fprintf(file, KOTA_SETTER_FORMAT,

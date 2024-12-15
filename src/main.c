@@ -4,7 +4,7 @@
 #include <conio.h>
 #include <unistd.h>
 
-#include "all.h"
+#include "menu.h"
 
 int main()
 {
@@ -63,11 +63,11 @@ int main()
 
     // menuFilm();
 
-    menuJadwal();
+    // menuJadwal();
 
     // menuKota();
 
-    // handleMenu();
+    handleMenu();
 
     return 0;
 }

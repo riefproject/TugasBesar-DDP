@@ -9,6 +9,7 @@
 #include "jadwal.h"
 #include "film.h"
 #include "studio.h"
+#include "menu.h"
 #include "db.h"
 
 // ================================== Getter ================================== //
@@ -106,8 +107,8 @@ int menuJadwal()
         }
         else if (command == 'E' || command == 'e') // Exit
         {
-            free(jadwals);
-            return 0;
+            printf(YELLOW BOLD "Keluar ...\n" RESET);
+            break;
         }
         else
         {
@@ -414,96 +415,6 @@ void createJadwalMenu()
     createJadwal(newJadwal.studio_id, newJadwal.film_id, waktu_awal_tayang, waktu_akhir_tayang, tersedia_sampai, harga_tiket);
 
     printf(GREEN BOLD "Berhasil menambah jadwal!\n" RESET);
-    sleep(2);
-}
-
-void updateJadwalMenu(Jadwal jadwal)
-{
-    printf(YELLOW "====================================================\n");
-    printf("              Menu Edit Jadwal (tiket)              \n");
-    printf("====================================================\n" RESET);
-
-    Jadwal updatedJadwal;
-    char input[MAX_TIME_LENGTH];
-    int harga_tiket;
-
-    // Pilih Studio
-    printf("Pilih Studio: \n");
-    updatedJadwal.studio_id = selectStudioJadwal();
-
-    // Pilih Film
-    printf("Pilih Film: \n");
-    updatedJadwal.film_id = selectFilmJadwal();
-
-    printf("Masukan harga tiket: ");
-    scanf("%d", &harga_tiket);
-    printf("\n");
-
-    int valid = 0;
-    while (!valid)
-    {
-        printf("Masukkan Waktu Awal Tayang (hh:mm): ");
-        fgets(input, sizeof(input), stdin); // untuk membersihkan buffer
-        sscanf(input, "%d:%d", &updatedJadwal.waktu_akhir_tayang.tm_hour, &updatedJadwal.waktu_akhir_tayang.tm_min);
-
-        valid = isValidTime(updatedJadwal.waktu_akhir_tayang.tm_hour, updatedJadwal.waktu_akhir_tayang.tm_min);
-        if (!valid)
-        {
-            printf("Waktu tidak valid! Pastikan jam (0-23) dan menit (0-59).\n");
-        }
-    }
-
-    // Input Waktu Akhir Tayang
-    valid = 0;
-    while (!valid)
-    {
-        printf("Masukkan Waktu Akhir Tayang (hh:mm): ");
-        fgets(input, sizeof(input), stdin);
-        sscanf(input, "%d:%d", &updatedJadwal.waktu_akhir_tayang.tm_hour, &updatedJadwal.waktu_akhir_tayang.tm_min);
-
-        valid = isValidTime(updatedJadwal.waktu_akhir_tayang.tm_hour, updatedJadwal.waktu_akhir_tayang.tm_min);
-        if (!valid)
-        {
-            printf("Waktu tidak valid! Pastikan jam (0-23) dan menit (0-59).\n");
-        }
-    }
-
-    // Input Tanggal Tersedia Sampai
-    valid = 0;
-    while (!valid)
-    {
-        printf("Masukkan Tanggal Tersedia Sampai (yyyy-mm-dd): ");
-        fgets(input, sizeof(input), stdin);
-        sscanf(input, "%d-%d-%d", &updatedJadwal.tersedia_sampai.tm_year, &updatedJadwal.tersedia_sampai.tm_mon, &updatedJadwal.tersedia_sampai.tm_mday);
-
-        updatedJadwal.tersedia_sampai.tm_year -= 1900; // tm_year mulai dari 1900
-        updatedJadwal.tersedia_sampai.tm_mon -= 1;     // tm_mon mulai dari 0 (Januari)
-
-        valid = isValidDate(updatedJadwal.tersedia_sampai.tm_year, updatedJadwal.tersedia_sampai.tm_mon + 1, updatedJadwal.tersedia_sampai.tm_mday);
-        if (!valid)
-        {
-            printf("Tanggal tidak valid! Pastikan format dan rentang tanggalnya benar.\n");
-        }
-    }
-
-    // Menyimpan perubahan jadwal ke database
-    updatedJadwal.id = jadwal.id; // Memastikan ID tetap sama dengan ID jadwal yang diupdate
-    Jadwal *newJadwal = updateJadwal(
-        jadwal.id,
-        updatedJadwal.studio_id,
-        updatedJadwal.film_id,
-        updatedJadwal.waktu_awal_tayang,
-        updatedJadwal.waktu_akhir_tayang,
-        updatedJadwal.tersedia_sampai,
-        harga_tiket);
-
-    if (newJadwal == NULL)
-    {
-        printf(RED BOLD "Gagal mengubah jadwal. Harap coba lagi.\n" RESET);
-        return;
-    }
-
-    printf(GREEN BOLD "Berhasil mengubah jadwal!.\n" RESET);
     sleep(2);
 }
 
@@ -859,6 +770,60 @@ int loadJadwal(Jadwal **jadwals)
                   &(*jadwals)[i].harga_tiket) == 11) // Validasi jumlah elemen
     {
         i++;
+    }
+    // printf("%d\n", (*jadwals)[0].tersedia_sampai.tm_year);
+    // sleep(10);
+    fclose(file);
+    return count;
+}
+
+int loadJadwalIsHasFilmId(Jadwal **jadwals, int id)
+{
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int count = countJadwalData();
+    if (count <= 0)
+    {
+        fclose(file);
+        return count;
+    }
+
+    *jadwals = (Jadwal *)malloc(count * sizeof(Jadwal));
+    if (*jadwals == NULL)
+    {
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
+
+    rewind(file);
+    int i = 0;
+
+    Jadwal *temp = malloc(sizeof(Jadwal));
+
+    while (fscanf(file, JADWAL_GETTER_FORMAT,
+                  temp->id,
+                  temp->studio_id,
+                  temp->film_id,
+                  temp->waktu_awal_tayang.tm_hour,
+                  temp->waktu_awal_tayang.tm_min,
+                  temp->waktu_akhir_tayang.tm_hour,
+                  temp->waktu_akhir_tayang.tm_min,
+                  temp->tersedia_sampai.tm_year,
+                  temp->tersedia_sampai.tm_mon,
+                  temp->tersedia_sampai.tm_mday,
+                  temp->harga_tiket) == 11) // Validasi jumlah elemen
+    {
+        if (temp->film_id == id)
+        {
+            jadwals[i] = temp;
+            i++;
+        }
     }
     // printf("%d\n", (*jadwals)[0].tersedia_sampai.tm_year);
     // sleep(10);

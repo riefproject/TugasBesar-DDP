@@ -14,4 +14,7 @@
 #include "transaksidetail.h"
 #include "user.h"
 
+#include "petugas.h"
+
+
 #endif
