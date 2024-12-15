@@ -220,17 +220,12 @@ void petugasMenu()
 
     while (1)
     {
-<<<<<<< HEAD
         selection = showMenu(menu, 6, header);
-=======
-        selection = showMenu(menu, 5, header);
->>>>>>> c2d71e003e9e9cb8a98cb2794d88546dc23a81ea
 
         switch (selection)
         {
         case 1:
             printf("Menampilkan Kelola Studio...\n");
-<<<<<<< HEAD
             petugasLihatStudio();
             break;
         case 2:
@@ -250,23 +245,6 @@ void petugasMenu()
             // salesReport();
             break;
         case 6:
-=======
-            menuStudio();
-            break;
-        case 2:
-            printf("Menampilkan Kelola Film...\n");
-            menuFilm();
-            break;
-        case 3:
-            printf("Menampilkan Kelola Jadwal...\n");
-            menuJadwal();
-            break;
-        case 4:
-            printf("Menampilkan Laporan Penjualan...\n");
-            // salesReport();
-            break;
-        case 5:
->>>>>>> c2d71e003e9e9cb8a98cb2794d88546dc23a81ea
             clearSession();
             printf("Berhasil logout!\n");
             return;
