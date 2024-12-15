@@ -645,7 +645,6 @@ int deleteUser(User user)
                 users[i].email,
                 users[i].notelp,
                 users[i].role);
-        sleep(10);
         i++;
     }
 

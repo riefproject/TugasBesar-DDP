@@ -33,9 +33,11 @@ void updateJadwalMenu(Jadwal jadwal);
 
 // ================================= Action =================================== //
 
+int isValidTime(int hour, int minute);
+int isValidDate(int year, int month, int day);
 Jadwal *cekKonflikJadwalStudio(int studio_id);
-Jadwal *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket);
-Jadwal *updateJadwal(int id, int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket);
+void *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket);
+void *updateJadwal(int id, int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket);
 int deleteJadwal(Jadwal jadwal);
 
 // ================================== Utils ================================== //

@@ -108,7 +108,7 @@ int menuFilm()
                 else
                 {
                     printf("Sudah di halaman terakhir.\n");
-                    sleep(500);
+                    sleep(1);
                 }
             }
             else if (command == 75)
@@ -119,7 +119,7 @@ int menuFilm()
                 else
                 {
                     printf("Sudah di halaman pertama.\n");
-                    sleep(500);
+                    sleep(1);
                 }
             }
             else if (command == 72)
@@ -175,7 +175,7 @@ int menuFilm()
         else
         {
             printf(YELLOW BOLD "Perintah tidak ditemukan\n" RESET);
-            sleep(500);
+            sleep(1);
         }
     }
 }
@@ -315,12 +315,12 @@ Film *findFilmByKode(const char *kode_film)
     Film *film = malloc(sizeof(Film));
     while (fscanf(file, FILM_GETTER_FORMAT,
                   &film->id,
+                  &film->bioskop_id,
                   film->kode_film,
                   film->judul,
                   film->genre,
                   &film->durasi,
-                  &film->tersedia,
-                  &film->bioskop_id) != EOF)
+                  &film->tersedia) != EOF)
     {
         if (film->kode_film == kode_film)
         {
@@ -331,6 +331,46 @@ Film *findFilmByKode(const char *kode_film)
 
     fclose(file);
     free(film);
+    return NULL;
+}
+
+Film *findFilmByID(const int id)
+{
+    FILE *file = fopen(FILM_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("Gagal membuka file film\n");
+        return NULL;
+    }
+
+    Film *film = malloc(sizeof(Film));
+    if (!film)
+    {
+        printf("Gagal alokasi memori untuk film\n");
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, FILM_GETTER_FORMAT,
+                  &film->id,
+                  &film->bioskop_id,
+                  film->kode_film,
+                  film->judul,
+                  film->genre,
+                  &film->durasi,
+                  &film->tersedia) != EOF)
+    {
+
+        if (film->id == id)
+        {
+            fclose(file); // Menutup file setelah menemukan film
+            return film;
+        }
+    }
+
+    // Tidak ditemukan film dengan ID yang diberikan
+    fclose(file);
+    free(film); // Membebaskan memori yang dialokasikan
     return NULL;
 }
 

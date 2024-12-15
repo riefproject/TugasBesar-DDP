@@ -65,7 +65,7 @@ int menuKota()
                 else
                 {
                     printf("Sudah di halaman terakhir.\n");
-                    sleep(500);
+                    sleep(1);
                 }
             }
             else if (command == 75)
@@ -76,7 +76,7 @@ int menuKota()
                 else
                 {
                     printf("Sudah di halaman pertama.\n");
-                    sleep(500);
+                    sleep(1);
                 }
             }
             else if (command == 72)
@@ -132,7 +132,7 @@ int menuKota()
         else
         {
             printf(YELLOW BOLD "Command not found\n" RESET);
-            sleep(500);
+            sleep(1);
         }
     }
 }
@@ -258,7 +258,7 @@ Kota *findKotaByName(const char *nama)
         return NULL;
     }
 
-    while (fscanf(file, "%d,%[^,]", &kota->id, kota->nama) == 2)
+    while (fscanf(file, KOTA_GETTER_FORMAT, &kota->id, kota->nama) == 2)
     {
         if (strcmp(kota->nama, nama) == 0)
         {
@@ -293,6 +293,7 @@ Kota *createKota(const char *nama)
     }
 
     int id = getLastAvailableID(KOTA_DATABASE_NAME);
+    
     kota->id = id;
 
     fprintf(file, KOTA_SETTER_FORMAT,
@@ -361,7 +362,6 @@ Kota *updateKota(const int id, const char *nama)
 
 int deleteKota(Kota kota)
 {
-
     int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus data kota dengan nama '%s'?\n", kota.nama) + 1;
     char *head = malloc(len);
     if (!head)
@@ -438,7 +438,6 @@ int deleteKota(Kota kota)
         fprintf(toFile, KOTA_SETTER_FORMAT,
                 users[i].id,
                 users[i].nama);
-        sleep(10);
         i++;
     }
 

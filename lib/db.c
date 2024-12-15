@@ -7,18 +7,28 @@
 
 int getLastAvailableID(char *databaseName)
 {
-    int count = 0;
-    char c;
-
     FILE *file = fopen(databaseName, "r");
-
-    while ((c = fgetc(file)) != EOF)
+    if (file == NULL)
     {
-        if (c == '\n')
+        return 1;
+    }
+
+    int id;
+    int maxID = 0;
+    char line[256];
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (sscanf(line, "%d", &id) == 1)
         {
-            count++;
+            if (id > maxID)
+            {
+                maxID = id;
+            }
         }
     }
 
-    return count + 1;
+    fclose(file);
+
+    return maxID + 1;
 }

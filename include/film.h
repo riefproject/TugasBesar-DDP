@@ -49,6 +49,7 @@ void updateFilmMenu(Film film);
 
 // ================================== Action ================================== //
 
+Film *findFilmByID(const int id);
 Film *findFilmByKode(const char *kode_film);
 Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
 Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
