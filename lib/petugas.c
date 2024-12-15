@@ -8,6 +8,8 @@
 #include "studio.h"
 #include "film.h"
 #include "jadwal.h"
+#include "auth.h"
+#include "transaksi.h"
 
 void petugasLihatStudio()
 {
@@ -315,10 +317,12 @@ int petugasTransaksi()
 
     int jadwalID = 0;
     Jadwal *jadwals;
-    int count = loadJadwalIsHasFilmId(&jadwals, filmID);
+    count = loadJadwalIsHasFilmId(&jadwals, filmID);
 
-    int page = 1, perPage = 10, selection = 1, pointer = 1;
-    int command;
+    page = 1;
+    perPage = 10;
+    selection = 1;
+    pointer = 1;
 
     while (1)
     {
@@ -377,8 +381,6 @@ int petugasTransaksi()
         else if (command == 13)
         {
             int jadwalID = jadwals[selection - 1].id;
-            free(jadwals);
-            return jadwalID;
         }
         else
         {
@@ -387,5 +389,49 @@ int petugasTransaksi()
         }
     }
 
-    
+    int harga = jadwals[selection - 1].harga_tiket;
+    int bayar, kembali;
+
+    while (1) // Loop sampai input valid
+    {
+        // Tampilkan harga tiket
+        printf("Harga tiket: %d\n", harga);
+
+        // Input jumlah pembayaran
+        printf("Masukkan jumlah uang yang dibayarkan: ");
+        scanf("%d", &bayar);
+
+        // Validasi apakah jumlah uang yang dibayarkan cukup
+        if (bayar < harga)
+        {
+            printf("Uang yang dibayarkan tidak cukup. Silakan coba lagi.\n\n");
+        }
+        else
+        {
+            // Hitung kembalian jika valid
+            kembali = bayar - harga;
+            break; // Keluar dari loop
+        }
+    }
+
+    // Tampilkan rincian transaksi
+    printf("\n========== Rincian Transaksi ==========\n");
+    printf("Harga Tiket : %d\n", harga);
+    printf("Bayar       : %d\n", bayar);
+    printf("Kembali     : %d\n", kembali);
+    printf("========================================\n");
+
+    // Buat transaksi baru
+    Transaksi *trans = createTransaksi(getCurrentUser()->id, jadwals[selection - 1].id, harga, bayar);
+
+    if (trans)
+    {
+        printf("Transaksi berhasil disimpan!\n");
+        printf("ID Transaksi: %d\n", trans->id);
+        free(trans); // Bebaskan memori setelah digunakan
+    }
+    else
+    {
+        printf("Gagal menyimpan transaksi.\n");
+    }
 }

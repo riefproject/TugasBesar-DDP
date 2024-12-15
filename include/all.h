@@ -11,10 +11,7 @@
 #include "security.h"
 #include "studio.h"
 #include "transaksi.h"
-#include "transaksidetail.h"
 #include "user.h"
-
 #include "petugas.h"
-
 
 #endif

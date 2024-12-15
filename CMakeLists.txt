@@ -27,6 +27,7 @@ set(SOURCES
     lib/studio.c
     lib/user.c
     lib/petugas.c
+    lib/transaksi.c
 )
 
 # Buat executable
