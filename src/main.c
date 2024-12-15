@@ -61,7 +61,9 @@ int main()
 
     // menuStudio();
 
-    menuFilm();
+    // menuFilm();
+
+    menuJadwal();
 
     // handleMenu();
 

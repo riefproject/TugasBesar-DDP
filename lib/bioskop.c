@@ -478,6 +478,7 @@ Bioskop *findBioskopByManagerId(int manager_id)
     }
 
     Bioskop *bioskop = malloc(sizeof(Bioskop));
+    Bioskop *selectedBioskop = NULL;
 
     int i = 0;
 
@@ -492,14 +493,15 @@ Bioskop *findBioskopByManagerId(int manager_id)
 
         if (bioskop->manager_id == manager_id)
         {
+            selectedBioskop = bioskop;
             break;
         }
         i++;
     }
 
     fclose(file);
-
-    return bioskop;
+    free(bioskop);
+    return selectedBioskop;
 }
 
 Bioskop *createBioskop(const char *nama, const char *alamat, const int kota_id, const int manager_id)

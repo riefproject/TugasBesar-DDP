@@ -131,22 +131,6 @@ void superAdminMenu()
             printf("Menampilkan Kelola Bioskop...\n");
             menuBioskop();
             break;
-        case 4:
-            printf("Menampilkan Kelola Studio...\n");
-            // menuStudio();
-            break;
-        case 5:
-            printf("Menampilkan Kelola Film...\n");
-            // menuFilm();
-            break;
-        case 6:
-            printf("Menampilkan Kelola Jadwal...\n");
-            // menuSchedule();
-            break;
-        case 7:
-            printf("Menampilkan Kelola Tiket...\n");
-            // menuTicket();
-            break;
         case 8:
             printf("Menampilkan Laporan Penjualan...\n");
             // salesReport();

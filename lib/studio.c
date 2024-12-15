@@ -30,7 +30,7 @@ void setJumlahKursi(Studio *studio, int jumlah_kursi)
     studio->jumlah_kursi = jumlah_kursi;
 }
 
-void setAdditionalFee(Studio *studio, float additionalFee)
+void setAdditionalFee(Studio *studio, int additionalFee)
 {
     studio->additionalFee = additionalFee;
 }
@@ -52,7 +52,7 @@ int getJumlahKursi(const Studio *studio)
     return studio->jumlah_kursi;
 }
 
-float getAdditionalFee(const Studio *studio)
+int getAdditionalFee(const Studio *studio)
 {
     return studio->additionalFee;
 }
@@ -69,6 +69,7 @@ int menuStudio()
 
     while (1)
     {
+
         system("cls");
         selection = (page - 1) * perPage + pointer;
 
@@ -174,7 +175,7 @@ void createStudioMenu()
 
     char nama[MAX_STUDIO_NAME];
     int jumlah_kursi = 0;
-    float additionalFee = 0.0f;
+    int additionalFee = 0;
 
     while (1)
     {
@@ -208,9 +209,9 @@ void createStudioMenu()
     while (1)
     {
         printf("Masukkan additionalFee\t: ");
-        scanf("%f", &additionalFee);
+        scanf("%d", &additionalFee);
 
-        if (additionalFee <= 0)
+        if (additionalFee < 0)
         {
             printf(RED BOLD "AdditionalFee tidak valid.\n" RESET);
             sleep(1);
@@ -239,7 +240,7 @@ void updateStudioMenu(Studio studio)
 
     char nama[MAX_STUDIO_NAME];
     int jumlah_kursi = 0;
-    float additionalFee = 0.0f;
+    int additionalFee = 0;
 
     while (1)
     {
@@ -273,9 +274,9 @@ void updateStudioMenu(Studio studio)
     while (1)
     {
         printf("Masukkan additionalFee\t: ");
-        scanf("%f", &additionalFee);
+        scanf("%d", &additionalFee);
 
-        if (additionalFee <= 0)
+        if (additionalFee < 0)
         {
             printf(RED BOLD "AdditionalFee tidak valid.\n" RESET);
             sleep(1);
@@ -298,7 +299,7 @@ void updateStudioMenu(Studio studio)
 
 // ==================================== Action ====================================//
 
-Studio *createStudio(const char *nama, int jumlah_kursi, float additionalFee)
+Studio *createStudio(const char *nama, int jumlah_kursi, int additionalFee)
 {
     Studio *studio = malloc(sizeof(Studio));
     if (!studio)
@@ -337,7 +338,7 @@ Studio *createStudio(const char *nama, int jumlah_kursi, float additionalFee)
     return studio;
 }
 
-Studio *updateStudio(const int id, const char *nama, int jumlah_kursi, float additionalFee)
+Studio *updateStudio(const int id, const char *nama, int jumlah_kursi, int additionalFee)
 {
     Studio *updatedStudio = malloc(sizeof(Studio));
     if (!updatedStudio)
@@ -491,6 +492,7 @@ int deleteStudio(Studio studio)
 }
 
 // ==================================== Utils ====================================//
+
 int countStudioData()
 {
     FILE *file = fopen(STUDIO_DATABASE_NAME, "r");
@@ -582,7 +584,7 @@ void printStudioTable(Studio *studios, int count, int page, int perPage, int sel
         if (kursiLen > jumlahKursiWidth)
             jumlahKursiWidth = kursiLen;
 
-        int additionalFeeLen = snprintf(NULL, 0, "%f", studios[i].additionalFee);
+        int additionalFeeLen = snprintf(NULL, 0, "%d", studios[i].additionalFee);
         if (additionalFeeLen > additionalFeeWidth)
             additionalFeeWidth = additionalFeeLen;
     }
@@ -617,7 +619,7 @@ void printStudioTable(Studio *studios, int count, int page, int perPage, int sel
         // Tampilkan dengan penanda jika dipilih
         if (selection == i + 1)
         {
-            printf(BLUE BOLD "[ * ]| %-*d | %-*s | %-*d | %-*.2f |\n" RESET,
+            printf(BLUE BOLD "[ * ]| %-*d | %-*s | %-*d | %-*d |\n" RESET,
                    idWidth, studios[i].id,
                    namaWidth, studios[i].nama,
                    jumlahKursiWidth, studios[i].jumlah_kursi,
@@ -625,7 +627,7 @@ void printStudioTable(Studio *studios, int count, int page, int perPage, int sel
         }
         else
         {
-            printf("[   ]| %-*d | %-*s | %-*d | %-*.2f |\n",
+            printf("[   ]| %-*d | %-*s | %-*d | %-*d |\n",
                    idWidth, studios[i].id,
                    namaWidth, studios[i].nama,
                    jumlahKursiWidth, studios[i].jumlah_kursi,

@@ -148,7 +148,7 @@ int menuUser()
 
             free(users);
             count = loadUser(&users);
-            pointer = 1;
+            
         }
         else if (command == 'U' || command == 'u')
         {
@@ -156,7 +156,7 @@ int menuUser()
 
             free(users);
             count = loadUser(&users);
-            pointer = 1;
+            
         }
         else if (command == 'D' || command == 'd')
         {
@@ -164,7 +164,7 @@ int menuUser()
 
             free(users);
             count = loadUser(&users);
-            pointer = 1;
+            
         }
         else if (command == 'E' || command == 'e')
         {

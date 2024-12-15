@@ -312,7 +312,7 @@ Film *findFilmByKode(const char *kode_film)
         return NULL;
     }
 
-    Film *film;
+    Film *film = malloc(sizeof(Film));
     while (fscanf(file, FILM_GETTER_FORMAT,
                   &film->id,
                   film->kode_film,
@@ -340,11 +340,20 @@ Film *createFilm(const char *kode_film, const char *judul, const char *genre, in
     if (!film)
     {
         printf("Alokasi memori gagal, location: createFilm\n");
+        sleep(2);
         return NULL;
     }
 
     User *user = getCurrentUser();
-    int bioskop_id = findBioskopByManagerId(user->id)->id;
+    Bioskop *bioskop = findBioskopByManagerId(user->id);
+    if (bioskop == NULL)
+    {
+        printf(YELLOW BOLD "Bioskop Tidak di temukan wait until redirect..., Message location: createFilm" RESET);
+        sleep(2);
+        return NULL;
+    }
+
+    int bioskop_id = bioskop->id;
 
     // Set film properties using setters
     setFilmKode(film, kode_film);
@@ -357,6 +366,7 @@ Film *createFilm(const char *kode_film, const char *judul, const char *genre, in
     FILE *file = fopen(FILM_DATABASE_NAME, "a");
     if (!file)
     {
+        printf(YELLOW BOLD "File tidak dapat dibuka, Message location: createFilm" RESET);
         free(film);
         return NULL;
     }
@@ -365,13 +375,13 @@ Film *createFilm(const char *kode_film, const char *judul, const char *genre, in
     setFilmId(film, id);
 
     fprintf(file, FILM_SETTER_FORMAT,
-            getFilmId(film),
-            getFilmKode(film),
-            getFilmJudul(film),
-            getFilmGenre(film),
-            getFilmDurasi(film),
-            isFilmTersedia(film),
-            getFilmBioskopId(film));
+            film->id,
+            film->bioskop_id,
+            film->kode_film,
+            film->judul,
+            film->genre,
+            film->durasi,
+            film->tersedia);
 
     fclose(file);
     return film;
@@ -434,13 +444,13 @@ Film *updateFilm(int id, const char *kode_film, const char *judul, const char *g
     while (i < count)
     {
         fprintf(toFile, FILM_SETTER_FORMAT,
-                getFilmId(&films[i]),
-                getFilmKode(&films[i]),
-                getFilmJudul(&films[i]),
-                getFilmGenre(&films[i]),
-                getFilmDurasi(&films[i]),
-                isFilmTersedia(&films[i]),
-                getFilmBioskopId(&films[i]));
+                films[i].id,
+                films[i].bioskop_id,
+                films[i].kode_film,
+                films[i].judul,
+                films[i].genre,
+                films[i].durasi,
+                films[i].tersedia);
         i++;
     }
 
@@ -615,8 +625,8 @@ void printFilmTable(Film *films, int count, int page, int perPage, int selection
     printf("              Menu Management Film                  \n");
     printf("====================================================\n" RESET);
 
-    int idWidth = 2, kodeWidth = 8, judulWidth = 4;
-    int genreWidth = 5, durasiWidth = 6, tersediaWidth = 8;
+    int idWidth = 2, kodeWidth = 9, judulWidth = 4;
+    int genreWidth = 5, durasiWidth = 14, tersediaWidth = 8;
 
     int start = (page - 1) * perPage;
     int end = start + perPage;
@@ -643,7 +653,7 @@ void printFilmTable(Film *films, int count, int page, int perPage, int selection
                               kodeWidth, "Kode Film",
                               judulWidth, "Judul",
                               genreWidth, "Genre",
-                              durasiWidth, "Durasi",
+                              durasiWidth, "Durasi (menit)",
                               tersediaWidth, "Tersedia");
 
     // Cetak garis atas tabel
@@ -657,7 +667,7 @@ void printFilmTable(Film *films, int count, int page, int perPage, int selection
            kodeWidth, "Kode Film",
            judulWidth, "Judul",
            genreWidth, "Genre",
-           durasiWidth, "Durasi",
+           durasiWidth, "Durasi (menit)",
            tersediaWidth, "Tersedia");
 
     // Cetak garis bawah header

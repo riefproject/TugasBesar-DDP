@@ -2,363 +2,826 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <conio.h>
+#include <unistd.h>
+
+#include "display.h"
 #include "jadwal.h"
 #include "film.h"
+#include "studio.h"
+#include "db.h"
 
-// Custom strptime untuk kompatibilitas Windows
-char *strptime(const char *s, const char *format, struct tm *tm)
+// ================================== Getter ================================== //
+
+// ================================== Setter ================================== //
+
+// ================================ Main Menu ================================= //
+
+int menuJadwal()
 {
-    memset(tm, 0, sizeof(*tm));
-    if (sscanf(s, "%d-%d-%d %d:%d",
-               &tm->tm_year, &tm->tm_mon, &tm->tm_mday,
-               &tm->tm_hour, &tm->tm_min) != 5)
+    Jadwal *jadwals;
+    int count = loadJadwal(&jadwals);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        return NULL;
+        system("cls");
+        selection = (page - 1) * perPage + pointer;
+
+        printf(GREEN "====================================================\n");
+        printf("             Menu Management Jadwal                 \n");
+        printf("====================================================\n" RESET);
+
+        printJadwalTable(jadwals, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
+        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit" RESET "\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
+        {
+            command = getch();
+
+            if (command == 77) // Arrow Right -> Next Page
+            {
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf(BLUE "Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 75) // Arrow Left -> Previous Page
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf(BLUE "Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 72) // Arrow Up -> Move up in list
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80) // Arrow Down -> Move down in list
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 32) // Space Bar -> Select item
+        {
+            printf("Jadwal terpilih ID: %d\n", jadwals[selection - 1].id);
+            free(jadwals);
+            return 0;
+        }
+        else if (command == 'C' || command == 'c') // Create new Jadwal
+        {
+            createJadwalMenu();
+
+            free(jadwals);
+            count = loadJadwal(&jadwals);
+            pointer = 1;
+        }
+        else if (command == 'U' || command == 'u') // Update selected Jadwal
+        {
+            updateJadwalMenu(jadwals[selection - 1]);
+
+            free(jadwals);
+            count = loadJadwal(&jadwals);
+            pointer = 1;
+        }
+        else if (command == 'D' || command == 'd') // Delete selected Jadwal
+        {
+            deleteJadwal(jadwals[selection - 1]);
+
+            free(jadwals);
+            count = loadJadwal(&jadwals);
+            pointer = 1;
+        }
+        else if (command == 'E' || command == 'e') // Exit
+        {
+            free(jadwals);
+            return 0;
+        }
+        else
+        {
+            printf(YELLOW BOLD "Perintah tidak ditemukan\n" RESET);
+            sleep(1);
+        }
     }
-    tm->tm_year -= 1900;
-    tm->tm_mon -= 1;
-    return (char *)(s + strlen(s));
 }
 
-// Constructor
-Jadwal createJadwal(int id, int studio_id, int film_id, Waktu waktu_tayang)
+int selectStudioJadwal()
 {
-    Jadwal jadwal;
-    jadwal.id = id;
-    jadwal.studio_id = studio_id;
-    jadwal.film_id = film_id;
-    jadwal.waktu_tayang = waktu_tayang;
-    jadwal.status = 0; // Default: Belum dimulai
+    Studio *studioList;
+    int count = loadStudio(&studioList);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
+    {
+        selection = (page - 1) * perPage + pointer;
+
+        printStudioTable(studioList, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page\n");
+        printf("[Arrow /\\] | [Arrow \\/] Arrow Up/Down To Selecting\n");
+        printf(GREEN "[ENTER]: Enter To Select Studio\n\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
+        {
+            command = getch();
+
+            if (command == 77)
+            {
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf("Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 75)
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf("Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 72)
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80)
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 13)
+        {
+            Jadwal *jadwal = cekKonflikJadwalStudio(studioList[selection - 1].id);
+            if (jadwal != NULL)
+            {
+                printf("Studio ini sedang memutar film lain dalam ");
+                continue;
+            }
+
+            printf("Studio " GREEN "%s" RESET " dipilih\n", studioList[selection - 1].nama);
+
+            int studioID = studioList[selection - 1].id;
+
+            free(studioList);
+
+            return studioID;
+        }
+        else
+        {
+            printf(YELLOW BOLD "Command not found\n" RESET);
+            sleep(1);
+        }
+    }
+}
+
+int selectFilmJadwal()
+{
+    Film *filmList;
+    int count = loadFilm(&filmList);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
+    {
+        selection = (page - 1) * perPage + pointer;
+
+        printFilmTable(filmList, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page\n");
+        printf("[Arrow /\\] | [Arrow \\/] Arrow Up/Down To Selecting\n");
+        printf(GREEN "[ENTER]: Enter To Select Film\n\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
+        {
+            command = getch();
+
+            if (command == 77)
+            {
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf("Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 75)
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf("Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 72)
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80)
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 13)
+        {
+            printf("Film " GREEN "%s" RESET " dipilih\n", filmList[selection - 1].judul);
+
+            int filmID = filmList[selection - 1].id;
+
+            free(filmList);
+
+            return filmID;
+        }
+        else
+        {
+            printf(YELLOW BOLD "Command not found\n" RESET);
+            sleep(1);
+        }
+    }
+}
+
+void createJadwalMenu()
+{
+    system("cls");
+
+    printf(GREEN "====================================================\n");
+    printf("              Menu Tambah Jadwal (tiket)            \n");
+    printf("====================================================\n" RESET);
+
+    Jadwal newJadwal;
+    char input[MAX_TIME_LENGTH];
+    int harga_tiket;
+
+    // Pilih Studio
+    printf("Pilih Studio: \n");
+    newJadwal.studio_id = selectStudioJadwal();
+
+    // Pilih Film
+    printf("Pilih Film: \n");
+    newJadwal.film_id = selectFilmJadwal();
+
+    printf("Masukan harga tiket: ");
+    scanf("%d", &harga_tiket);
+    printf("\n");
+
+    // Input Waktu Awal Tayang
+    printf("Masukkan Waktu Awal Tayang (hh:mm): ");
+    fgets(input, sizeof(input), stdin); // untuk membersihkan buffer
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d:%d",
+           &newJadwal.waktu_awal_tayang.tm_hour, &newJadwal.waktu_awal_tayang.tm_min);
+    newJadwal.waktu_awal_tayang.tm_year -= 1900; // tm_year mulai dari 1900
+
+    // Input Waktu Akhir Tayang
+    printf("Masukkan Waktu Akhir Tayang (hh:mm): ");
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d:%d",
+           &newJadwal.waktu_akhir_tayang.tm_hour, &newJadwal.waktu_akhir_tayang.tm_min);
+    newJadwal.waktu_akhir_tayang.tm_year -= 1900; // tm_year mulai dari 1900
+
+    // Input Waktu Tersedia Sampai
+    printf("Masukkan Waktu Tersedia Sampai (yyyy-mm-dd): ");
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d-%d-%d", &newJadwal.tersedia_sampai.tm_year,
+           &newJadwal.tersedia_sampai.tm_mon, &newJadwal.tersedia_sampai.tm_mday);
+    newJadwal.tersedia_sampai.tm_year -= 1900; // tm_year mulai dari 1900
+
+    Jadwal *createdJadwal = createJadwal(
+        newJadwal.studio_id,
+        newJadwal.film_id,
+        newJadwal.waktu_awal_tayang,
+        newJadwal.waktu_akhir_tayang,
+        newJadwal.tersedia_sampai,
+        harga_tiket);
+
+    if (createdJadwal == NULL)
+    {
+        printf(RED BOLD "Gagal menambah jadwal. Harap coba lagi.\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil menambah jadwal!.\n" RESET);
+    sleep(2);
+    free(createdJadwal);
+}
+
+void updateJadwalMenu(Jadwal jadwal)
+{
+    printf(YELLOW "====================================================\n");
+    printf("              Menu Edit Jadwal (tiket)              \n");
+    printf("====================================================\n" RESET);
+
+    Jadwal updatedJadwal;
+    char input[MAX_TIME_LENGTH];
+    int harga_tiket;
+
+    // Pilih Studio
+    printf("Pilih Studio: \n");
+    updatedJadwal.studio_id = selectStudioJadwal();
+
+    // Pilih Film
+    printf("Pilih Film: \n");
+    updatedJadwal.film_id = selectFilmJadwal();
+
+    printf("Masukan harga tiket: ");
+    scanf("%d", &harga_tiket);
+    printf("\n");
+
+    // Input Waktu Awal Tayang
+    printf("Masukkan Waktu Awal Tayang (hh:mm): ");
+    fgets(input, sizeof(input), stdin); // untuk membersihkan buffer
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d:%d",
+           &updatedJadwal.waktu_awal_tayang.tm_hour, &updatedJadwal.waktu_awal_tayang.tm_min);
+    updatedJadwal.waktu_awal_tayang.tm_year -= 1900; // tm_year mulai dari 1900
+
+    // Input Waktu Akhir Tayang
+    printf("Masukkan Waktu Akhir Tayang (hh:mm): ");
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d:%d",
+           &updatedJadwal.waktu_akhir_tayang.tm_hour, &updatedJadwal.waktu_akhir_tayang.tm_min);
+    updatedJadwal.waktu_akhir_tayang.tm_year -= 1900; // tm_year mulai dari 1900
+
+    // Input Waktu Tersedia Sampai
+    printf("Masukkan Waktu Tersedia Sampai (yyyy-mm-dd): ");
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d-%d-%d", &updatedJadwal.tersedia_sampai.tm_year,
+           &updatedJadwal.tersedia_sampai.tm_mon, &updatedJadwal.tersedia_sampai.tm_mday);
+    updatedJadwal.tersedia_sampai.tm_year -= 1900; // tm_year mulai dari 1900
+
+    // Menyimpan perubahan jadwal ke database
+    updatedJadwal.id = jadwal.id; // Memastikan ID tetap sama dengan ID jadwal yang diupdate
+    Jadwal *newJadwal = updateJadwal(
+        jadwal.id,
+        updatedJadwal.studio_id,
+        updatedJadwal.film_id,
+        updatedJadwal.waktu_awal_tayang,
+        updatedJadwal.waktu_akhir_tayang,
+        updatedJadwal.tersedia_sampai,
+        harga_tiket);
+
+    if (newJadwal == NULL)
+    {
+        printf(RED BOLD "Gagal mengubah jadwal. Harap coba lagi.\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil mengubah jadwal!.\n" RESET);
+    sleep(2);
+    return newJadwal;
+}
+
+// ================================= Action =================================== //
+
+Jadwal *cekKonflikJadwalStudio(int studio_id)
+{
+    Jadwal *jadwalList;
+    int count = loadJadwal(&jadwalList);
+
+    time_t sekarang = time(NULL);
+    struct tm *hari_ini = localtime(&sekarang);
+    int i = 0;
+
+    while (i < count)
+    {
+        if (jadwalList[i].studio_id == studio_id)
+        {
+            // Periksa jika ada film dengan tersedia_sampai > hari ini
+            if (difftime(mktime(&jadwalList[i].tersedia_sampai), mktime(hari_ini)) > 0)
+            {
+                return &jadwalList[i]; // Konflik ditemukan karena studio sudah terpakai
+            }
+        }
+        i++;
+    }
+
+    return NULL; // Tidak ada konflik
+}
+
+Jadwal *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket)
+{
+    Jadwal *jadwal = malloc(sizeof(Jadwal));
+    if (!jadwal)
+    {
+        printf("Alokasi memori gagal, lokasi: createJadwal\n");
+        return NULL;
+    }
+
+    jadwal->id = getLastAvailableID(JADWAL_DATABASE_NAME);
+    jadwal->studio_id = studio_id;
+    jadwal->film_id = film_id;
+    jadwal->waktu_awal_tayang.tm_hour = waktu_awal_tayang.tm_hour;
+    jadwal->waktu_awal_tayang.tm_min = waktu_awal_tayang.tm_min;
+    jadwal->waktu_akhir_tayang.tm_hour = waktu_akhir_tayang.tm_hour;
+    jadwal->waktu_akhir_tayang.tm_min = waktu_akhir_tayang.tm_min;
+    jadwal->tersedia_sampai = tersedia_sampai;
+    jadwal->harga_tiket = harga_tiket;
+
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "a");
+    if (!file)
+    {
+        printf("Gagal membuka file untuk menulis data jadwal\n");
+        free(jadwal);
+        return NULL;
+    }
+
+    fprintf(file, JADWAL_SETTER_FORMAT,
+            jadwal->id,
+            jadwal->studio_id,
+            jadwal->film_id,
+            jadwal->waktu_awal_tayang.tm_hour, jadwal->waktu_awal_tayang.tm_min,
+            jadwal->waktu_akhir_tayang.tm_hour, jadwal->waktu_akhir_tayang.tm_min,
+            jadwal->tersedia_sampai.tm_year + 1900, jadwal->tersedia_sampai.tm_mon + 1, jadwal->tersedia_sampai.tm_mday,
+            jadwal->harga_tiket);
+
+    fclose(file);
     return jadwal;
 }
 
-// Getter
-int getJadwalId(const Jadwal *jadwal) { return jadwal->id; }
-int getJadwalStudioId(const Jadwal *jadwal) { return jadwal->studio_id; }
-int getJadwalFilmId(const Jadwal *jadwal) { return jadwal->film_id; }
-Waktu getJadwalWaktuTayang(const Jadwal *jadwal) { return jadwal->waktu_tayang; }
-int getJadwalStatus(const Jadwal *jadwal) { return jadwal->status; }
-
-// Setter
-void setJadwalId(Jadwal *jadwal, int id) { jadwal->id = id; }
-void setJadwalStudioId(Jadwal *jadwal, int studio_id) { jadwal->studio_id = studio_id; }
-void setJadwalFilmId(Jadwal *jadwal, int film_id) { jadwal->film_id = film_id; }
-void setJadwalWaktuTayang(Jadwal *jadwal, Waktu waktu_tayang) { jadwal->waktu_tayang = waktu_tayang; }
-void setJadwalStatus(Jadwal *jadwal, int status) { jadwal->status = status; }
-
-// Validasi waktu
-int validateTime(const char *timeStr, Waktu *waktu)
+Jadwal *updateJadwal(int id, int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket)
 {
-    if (strptime(timeStr, "%Y-%m-%d %H:%M", waktu) == NULL)
+    FILE *fromFile = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!fromFile)
     {
-        return 0;
+        printf("Gagal membuka file untuk membaca data jadwal\n");
+        return NULL;
     }
-    return 1;
+
+    int count = countJadwalData();
+    Jadwal jadwals[count];
+    int i = 0;
+
+    while (fscanf(fromFile, JADWAL_GETTER_FORMAT,
+                  &jadwals[i].id,
+                  &jadwals[i].studio_id,
+                  &jadwals[i].film_id,
+                  &jadwals[i].waktu_awal_tayang.tm_hour, &jadwals[i].waktu_awal_tayang.tm_min,
+                  &jadwals[i].waktu_akhir_tayang.tm_hour, &jadwals[i].waktu_akhir_tayang.tm_min,
+                  &jadwals[i].tersedia_sampai.tm_year, &jadwals[i].tersedia_sampai.tm_mon, &jadwals[i].tersedia_sampai.tm_mday,
+                  &jadwals[i].harga_tiket) != EOF)
+    {
+        if (jadwals[i].id == id)
+        {
+            jadwals[i].studio_id = studio_id;
+            jadwals[i].film_id = film_id;
+            jadwals[i].waktu_awal_tayang.tm_hour = waktu_awal_tayang.tm_hour;
+            jadwals[i].waktu_awal_tayang.tm_min = waktu_awal_tayang.tm_min;
+            jadwals[i].waktu_akhir_tayang.tm_hour = waktu_akhir_tayang.tm_hour;
+            jadwals[i].waktu_akhir_tayang.tm_min = waktu_akhir_tayang.tm_min;
+            jadwals[i].tersedia_sampai = tersedia_sampai;
+            jadwals[i].harga_tiket = harga_tiket;
+            id = i;
+        }
+        i++;
+    }
+    fclose(fromFile);
+
+    FILE *toFile = fopen(JADWAL_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf("Gagal membuka file untuk menulis data jadwal\n");
+        return NULL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        fprintf(toFile, JADWAL_SETTER_FORMAT,
+                jadwals[i].id,
+                jadwals[i].studio_id,
+                jadwals[i].film_id,
+                jadwals[i].waktu_awal_tayang.tm_hour, jadwals[i].waktu_awal_tayang.tm_min,
+                jadwals[i].waktu_akhir_tayang.tm_hour, jadwals[i].waktu_akhir_tayang.tm_min,
+                jadwals[i].tersedia_sampai.tm_year + 1900, jadwals[i].tersedia_sampai.tm_mon + 1, jadwals[i].tersedia_sampai.tm_mday,
+                &jadwals[i].harga_tiket);
+    }
+
+    fclose(toFile);
+    return &jadwals[id];
 }
 
-// Menambahkan jadwal baru
-int addJadwal()
+int deleteJadwal(Jadwal jadwal)
 {
-    FILE *file = fopen(JADWAL_CSV_FILE, "a");
-    if (!file)
+    // Buat pesan konfirmasi
+    int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus jadwal dengan ID '%d'?\n", jadwal.id) + 1;
+    char *head = malloc(len);
+    if (!head)
     {
-        perror("Gagal membuka file jadwal.csv");
-        return 0;
+        printf(RED "Gagal mengalokasikan memori.\n" RESET);
+        sleep(1);
+        return -1;
+    }
+    snprintf(head, len, "Apakah Anda yakin ingin menghapus jadwal dengan ID '%d'?\n", jadwal.id);
+
+    char *menu[] = {
+        "Tidak, Batalkan",
+        "Ya, Hapus",
+    };
+
+    char *header[] = {
+        RED BOLD "====================================================\n",
+        "             Konfirmasi Hapus Jadwal               \n",
+        "====================================================\n\n" RESET,
+        head,
+        NULL};
+
+    int selection = showMenu(menu, 2, header);
+    free(head);
+
+    if (selection != 1)
+    {
+        printf("Penghapusan dibatalkan.\n");
+        return 0; // Penghapusan dibatalkan
     }
 
+    // Buka file untuk membaca jadwal
+    FILE *fromFile = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        printf("Gagal membuka file untuk membaca data jadwal\n");
+        return -1;
+    }
+
+    int count = countJadwalData();
+    if (count == 0)
+    {
+        printf("Tidak ada data jadwal untuk dihapus\n");
+        fclose(fromFile);
+        return -1;
+    }
+
+    Jadwal jadwals[count];
+    int i = 0;
+
+    Jadwal temp;
+    // Membaca data jadwal dari file dan menyaring yang akan dihapus
+    while (fscanf(fromFile, JADWAL_GETTER_FORMAT,
+                  &temp.id,
+                  &temp.studio_id,
+                  &temp.film_id,
+                  &temp.waktu_awal_tayang.tm_hour, &temp.waktu_awal_tayang.tm_min,
+                  &temp.waktu_akhir_tayang.tm_hour, &temp.waktu_akhir_tayang.tm_min,
+                  &temp.tersedia_sampai.tm_year, &temp.tersedia_sampai.tm_mon, &temp.tersedia_sampai.tm_mday,
+                  &temp.harga_tiket) != EOF)
+    {
+        printf("Membaca jadwal ID: %d\n", temp.id); // Debug log
+        if (temp.id != jadwal.id)
+        {
+            jadwals[i] = temp;
+            i++;
+        }
+    }
+    fclose(fromFile);
+
+    // Jika jadwal tidak ditemukan
+    if (i == count)
+    {
+        printf("Jadwal dengan ID %d tidak ditemukan\n", jadwal.id);
+        return -1;
+    }
+
+    // Menulis ulang data jadwal ke file tanpa yang dihapus
+    FILE *toFile = fopen(JADWAL_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf("Gagal membuka file untuk menulis data jadwal\n");
+        return -1;
+    }
+
+    for (int j = 0; j < i; j++)
+    {
+        printf("Menulis ulang jadwal ID: %d\n", jadwals[j].id); // Debug log
+        fprintf(toFile, JADWAL_SETTER_FORMAT,
+                jadwals[j].id,
+                jadwals[j].studio_id,
+                jadwals[j].film_id,
+                jadwals[j].waktu_awal_tayang.tm_hour, jadwals[j].waktu_awal_tayang.tm_min,
+                jadwals[j].waktu_akhir_tayang.tm_hour, jadwals[j].waktu_akhir_tayang.tm_min,
+                jadwals[j].tersedia_sampai.tm_year + 1900, jadwals[j].tersedia_sampai.tm_mon + 1, jadwals[j].tersedia_sampai.tm_mday,
+                jadwals[j].harga_tiket);
+    }
+
+    fclose(toFile);
+    printf("Jadwal dengan ID %d berhasil dihapus.\n", jadwal.id);
+    return 1; // Berhasil menghapus jadwal
+}
+
+// ================================== Utils ================================== //
+int countJadwalData()
+{
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int count = 0;
     Jadwal jadwal;
-    char waktu_input[MAX_TIME_LENGTH];
-    Waktu waktu_baru;
-    int durasi_baru;
 
-    printf("Masukkan ID Studio: ");
-    scanf("%d", &jadwal.studio_id);
-    printf("Masukkan ID Film: ");
-    scanf("%d", &jadwal.film_id);
-    printf("Masukkan Waktu Tayang (YYYY-MM-DD HH:MM): ");
-    scanf(" %[^\n]", waktu_input);
-
-    if (!validateTime(waktu_input, &waktu_baru))
+    while (fscanf(file, JADWAL_GETTER_FORMAT,
+                  &jadwal.id,
+                  &jadwal.studio_id,
+                  &jadwal.film_id,
+                  &jadwal.waktu_awal_tayang.tm_hour,
+                  &jadwal.waktu_awal_tayang.tm_min,
+                  &jadwal.waktu_akhir_tayang.tm_hour,
+                  &jadwal.waktu_akhir_tayang.tm_min,
+                  &jadwal.tersedia_sampai.tm_year,
+                  &jadwal.tersedia_sampai.tm_mon,
+                  &jadwal.tersedia_sampai.tm_mday,
+                  &jadwal.harga_tiket) == 11) // 11 elemen harus berhasil dibaca
     {
-        printf("Waktu tidak valid.\n");
-        fclose(file);
-        return 0;
-    }
 
-    durasi_baru = getFilmDurasiById(jadwal.film_id); // Ambil durasi dari film
-    if (durasi_baru <= 0)
-    {
-        printf("Film tidak ditemukan atau durasi tidak valid.\n");
-        fclose(file);
-        return 0;
-    }
-
-    if (isTimeConflict(jadwal.studio_id, &waktu_baru, durasi_baru, JEDA_STANDAR))
-    {
-        printf("Gagal menambahkan jadwal. Konflik waktu.\n");
-        fclose(file);
-        return 0;
-    }
-
-    jadwal.waktu_tayang = waktu_baru;
-    jadwal.id = time(NULL) % 1000000; // ID unik
-    jadwal.status = getStatusJadwal(&jadwal, durasi_baru);
-
-    fprintf(file, "%d,%d,%d,%d-%02d-%02d %02d:%02d,%d\n",
-            jadwal.id, jadwal.studio_id, jadwal.film_id,
-            jadwal.waktu_tayang.tm_year + 1900,
-            jadwal.waktu_tayang.tm_mon + 1,
-            jadwal.waktu_tayang.tm_mday,
-            jadwal.waktu_tayang.tm_hour,
-            jadwal.waktu_tayang.tm_min,
-            jadwal.status);
-
-    fclose(file);
-    printf("Jadwal berhasil ditambahkan.\n");
-    return 1;
-}
-
-// Menampilkan semua jadwal
-void displayJadwal()
-{
-    FILE *file = fopen(JADWAL_CSV_FILE, "r");
-    if (!file)
-    {
-        perror("Gagal membuka file jadwal.csv");
-        return;
-    }
-
-    char line[256];
-    printf("===========================================================\n");
-    printf("%-5s %-10s %-10s %-20s %-15s\n", "ID", "Studio", "Film", "Waktu", "Status");
-    printf("===========================================================\n");
-
-    while (fgets(line, sizeof(line), file))
-    {
-        Jadwal jadwal;
-        char waktu_str[MAX_TIME_LENGTH];
-
-        sscanf(line, "%d,%d,%d,%19[^,],%d",
-               &jadwal.id, &jadwal.studio_id, &jadwal.film_id, waktu_str, &jadwal.status);
-
-        strptime(waktu_str, "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-        int durasiFilm = getFilmDurasiById(jadwal.film_id);
-        jadwal.status = getStatusJadwal(&jadwal, durasiFilm);
-
-        char waktu_formatted[MAX_TIME_LENGTH];
-        strftime(waktu_formatted, sizeof(waktu_formatted), "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-
-        const char *statusDesc = (jadwal.status == 0) ? "Belum Dimulai" : (jadwal.status == 1) ? "Sedang Berlangsung"
-                                                                                               : "Selesai";
-
-        printf("%-5d %-10d %-10d %-20s %-15s\n",
-               jadwal.id, jadwal.studio_id, jadwal.film_id, waktu_formatted, statusDesc);
+        count++;
     }
 
     fclose(file);
+    return count;
 }
-
-// Validasi konflik waktu
-int isTimeConflict(int studio_id, const Waktu *waktu_baru, int durasi_baru, int jeda)
+int loadJadwal(Jadwal **jadwals)
 {
-    FILE *file = fopen(JADWAL_CSV_FILE, "r");
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
     if (!file)
     {
-        perror("Gagal membuka file jadwal.csv");
-        return 1; // Anggap ada konflik
+        printf("File gagal dibuka.\n");
+        return -1;
     }
 
-    char line[256];
-    while (fgets(line, sizeof(line), file))
+    int count = countJadwalData();
+    if (count <= 0)
     {
-        Jadwal jadwal;
-        char waktu_str[MAX_TIME_LENGTH];
+        fclose(file);
+        return count;
+    }
 
-        sscanf(line, "%*d,%d,%*d,%19[^,],%*d", &jadwal.studio_id, waktu_str);
+    *jadwals = (Jadwal *)malloc(count * sizeof(Jadwal));
+    if (*jadwals == NULL)
+    {
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
 
-        if (jadwal.studio_id != studio_id)
-            continue;
+    rewind(file);
+    int i = 0;
+    while (fscanf(file, JADWAL_GETTER_FORMAT,
+                  &(*jadwals)[i].id,
+                  &(*jadwals)[i].studio_id,
+                  &(*jadwals)[i].film_id,
+                  &(*jadwals)[i].waktu_awal_tayang.tm_hour,
+                  &(*jadwals)[i].waktu_awal_tayang.tm_min,
+                  &(*jadwals)[i].waktu_akhir_tayang.tm_hour,
+                  &(*jadwals)[i].waktu_akhir_tayang.tm_min,
+                  &(*jadwals)[i].tersedia_sampai.tm_year,
+                  &(*jadwals)[i].tersedia_sampai.tm_mon,
+                  &(*jadwals)[i].tersedia_sampai.tm_mday,
+                  &(*jadwals)[i].harga_tiket) == 11) // Validasi jumlah elemen
+    {
+        i++;
+    }
+    // printf("%d\n", (*jadwals)[0].tersedia_sampai.tm_year);
+    // sleep(10);
+    fclose(file);
+    return count;
+}
 
-        strptime(waktu_str, "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-        time_t start_baru = mktime((struct tm *)waktu_baru);
-        time_t start_lama = mktime(&jadwal.waktu_tayang);
-        time_t end_lama = start_lama + (durasi_baru * 60) + (jeda * 60);
+void printJadwalTable(Jadwal *jadwal, int count, int page, int perPage, int selection)
+{
+    int idWidth = 2, studioWidth = 6, filmWidth = 6;
+    int waktuWidth = 11, tersediaWidth = 18; // waktuWidth untuk waktu awal dan akhir
 
-        if (difftime(start_baru, end_lama) < 0 && difftime(start_baru, start_lama) >= 0)
+    int start = (page - 1) * perPage;
+    int end = start + perPage;
+    if (end > count)
+        end = count;
+
+    // Hitung panjang kolom terpanjang
+    for (int i = start; i < end; i++)
+    {
+        int idLen = snprintf(NULL, 0, "%d", jadwal[i].id);
+        if (idLen > idWidth)
+            idWidth = idLen;
+
+        int studioLen = snprintf(NULL, 0, "%d", jadwal[i].studio_id);
+        if (studioLen > studioWidth)
+            studioWidth = studioLen;
+
+        int filmLen = snprintf(NULL, 0, "%d", jadwal[i].film_id);
+        if (filmLen > filmWidth)
+            filmWidth = filmLen;
+    }
+
+    // Hitung panjang tabel
+    int tableWidth = 6 + idWidth + 3 + studioWidth + 3 + filmWidth + 3 + waktuWidth + 3 + waktuWidth + 3 + tersediaWidth + 3;
+
+    // Cetak garis atas tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak header tabel
+    printf("[ * ]| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+           idWidth, "ID",
+           studioWidth, "Studio",
+           filmWidth, "Film",
+           waktuWidth, "Waktu Awal",
+           waktuWidth, "Waktu Akhir",
+           tersediaWidth, "Tersedia Sampai");
+
+    // Cetak garis bawah header
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak isi tabel
+    for (int i = start; i < end; i++)
+    {
+
+        char waktuAwal[20], waktuAkhir[20], tersedia[20];
+
+        // Format waktu
+        strftime(waktuAwal, sizeof(waktuAwal), "%H:%M", &jadwal[i].waktu_awal_tayang);
+        strftime(waktuAkhir, sizeof(waktuAkhir), "%H:%M", &jadwal[i].waktu_akhir_tayang);
+        snprintf(tersedia, sizeof(tersedia), "%d-%d-%d", jadwal[i].tersedia_sampai.tm_mday, jadwal[i].tersedia_sampai.tm_mon, jadwal[i].tersedia_sampai.tm_year);
+
+        // Tampilkan baris
+        if (selection == i + 1)
         {
-            fclose(file);
-            return 1; // Konflik
+            printf(BLUE BOLD "[ * ]| %-*d | %-*d | %-*d | %-*s | %-*s | %-*s |\n" RESET,
+                   idWidth, jadwal[i].id,
+                   studioWidth, jadwal[i].studio_id,
+                   filmWidth, jadwal[i].film_id,
+                   waktuWidth, waktuAwal,
+                   waktuWidth, waktuAkhir,
+                   tersediaWidth, tersedia);
+        }
+        else
+        {
+            printf("[   ]| %-*d | %-*d | %-*d | %-*s | %-*s | %-*s |\n",
+                   idWidth, jadwal[i].id,
+                   studioWidth, jadwal[i].studio_id,
+                   filmWidth, jadwal[i].film_id,
+                   waktuWidth, waktuAwal,
+                   waktuWidth, waktuAkhir,
+                   tersediaWidth, tersedia);
         }
     }
 
-    fclose(file);
-    return 0; // Tidak ada konflik
-}
+    // Cetak garis bawah tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
 
-// Menghitung status jadwal dinamis
-int getStatusJadwal(const Jadwal *jadwal, int durasiFilm)
-{
-    time_t now = time(NULL); // Waktu saat ini
-    time_t waktuTayang = mktime((struct tm *)&jadwal->waktu_tayang);
-    time_t waktuSelesai = waktuTayang + (durasiFilm * 60);
-
-    if (difftime(now, waktuTayang) < 0)
-        return 0; // Belum dimulai
-    else if (difftime(now, waktuSelesai) < 0)
-        return 1; // Sedang berlangsung
-    else
-        return 2; // Selesai
-}
-
-void displayJadwalByFilm(int film_id)
-{
-    FILE *file = fopen(JADWAL_CSV_FILE, "r");
-    if (!file)
-    {
-        perror("Gagal membuka file jadwal.csv");
-        return;
-    }
-
-    char line[256];
-    printf("Jadwal untuk Film ID %d:\n", film_id);
-    printf("===========================================================\n");
-    printf("%-5s %-10s %-20s %-15s\n", "ID", "Studio", "Waktu", "Status");
-    printf("===========================================================\n");
-
-    while (fgets(line, sizeof(line), file))
-    {
-        Jadwal jadwal;
-        char waktu_str[MAX_TIME_LENGTH];
-        int durasiFilm;
-
-        sscanf(line, "%d,%d,%d,%19[^,],%d",
-               &jadwal.id, &jadwal.studio_id, &jadwal.film_id, waktu_str, &jadwal.status);
-
-        // Lewati jika bukan film yang dimaksud
-        if (jadwal.film_id != film_id)
-            continue;
-
-        // Konversi waktu dan validasi status
-        strptime(waktu_str, "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-        durasiFilm = getFilmDurasiById(jadwal.film_id);
-        jadwal.status = getStatusJadwal(&jadwal, durasiFilm);
-
-        const char *statusDesc = (jadwal.status == 0) ? "Belum Dimulai" : (jadwal.status == 1) ? "Sedang Berlangsung"
-                                                                                               : "Selesai";
-
-        printf("%-5d %-10d %-20s %-15s\n",
-               jadwal.id, jadwal.studio_id, waktu_str, statusDesc);
-    }
-
-    fclose(file);
-}
-
-void displayJadwalByStudio(int studio_id)
-{
-    FILE *file = fopen(JADWAL_CSV_FILE, "r");
-    if (!file)
-    {
-        perror("Gagal membuka file jadwal.csv");
-        return;
-    }
-
-    char line[256];
-    printf("Jadwal untuk Studio ID %d:\n", studio_id);
-    printf("===========================================================\n");
-    printf("%-5s %-10s %-20s %-15s\n", "ID", "Film", "Waktu", "Status");
-    printf("===========================================================\n");
-
-    while (fgets(line, sizeof(line), file))
-    {
-        Jadwal jadwal;
-        char waktu_str[MAX_TIME_LENGTH];
-        int durasiFilm;
-
-        sscanf(line, "%d,%d,%d,%19[^,],%d",
-               &jadwal.id, &jadwal.studio_id, &jadwal.film_id, waktu_str, &jadwal.status);
-
-        // Lewati jika bukan studio yang dimaksud
-        if (jadwal.studio_id != studio_id)
-            continue;
-
-        // Konversi waktu dan validasi status
-        strptime(waktu_str, "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-        durasiFilm = getFilmDurasiById(jadwal.film_id);
-        jadwal.status = getStatusJadwal(&jadwal, durasiFilm);
-
-        const char *statusDesc = (jadwal.status == 0) ? "Belum Dimulai" : (jadwal.status == 1) ? "Sedang Berlangsung"
-                                                                                               : "Selesai";
-
-        printf("%-5d %-10d %-20s %-15s\n",
-               jadwal.id, jadwal.film_id, waktu_str, statusDesc);
-    }
-
-    fclose(file);
-}
-
-int tambahJeda(int jeda)
-{
-    FILE *file = fopen(JADWAL_CSV_FILE, "r");
-    if (!file)
-    {
-        perror("Gagal membuka file jadwal.csv");
-        return 0;
-    }
-
-    FILE *tempFile = fopen(TEMP_JADWAL_FILE, "w");
-    if (!tempFile)
-    {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
-
-    char line[256];
-    time_t now = time(NULL);
-    struct tm waktuSekarang = *localtime(&now);
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses setiap jadwal
-    while (fgets(line, sizeof(line), file))
-    {
-        Jadwal jadwal;
-        char waktu_str[MAX_TIME_LENGTH];
-
-        sscanf(line, "%d,%d,%d,%19[^,],%d",
-               &jadwal.id, &jadwal.studio_id, &jadwal.film_id, waktu_str, &jadwal.status);
-
-        // Konversi string waktu ke struct tm
-        strptime(waktu_str, "%Y-%m-%d %H:%M", &jadwal.waktu_tayang);
-
-        // Tambah jeda jika jadwal pada hari ini dan >= waktu sekarang
-        if (jadwal.waktu_tayang.tm_year == waktuSekarang.tm_year &&
-            jadwal.waktu_tayang.tm_yday == waktuSekarang.tm_yday &&
-            difftime(mktime(&jadwal.waktu_tayang), now) >= 0)
-        {
-            jadwal.waktu_tayang.tm_min += jeda;
-            mktime(&jadwal.waktu_tayang); // Normalisasi waktu
-        }
-
-        fprintf(tempFile, "%d,%d,%d,%d-%02d-%02d %02d:%02d,%d\n",
-                jadwal.id, jadwal.studio_id, jadwal.film_id,
-                jadwal.waktu_tayang.tm_year + 1900,
-                jadwal.waktu_tayang.tm_mon + 1,
-                jadwal.waktu_tayang.tm_mday,
-                jadwal.waktu_tayang.tm_hour,
-                jadwal.waktu_tayang.tm_min,
-                jadwal.status);
-    }
-
-    fclose(file);
-    fclose(tempFile);
-
-    // Ganti file asli dengan file sementara
-    remove(JADWAL_CSV_FILE);
-    rename(TEMP_JADWAL_FILE, JADWAL_CSV_FILE);
-
-    printf("Jeda %d menit berhasil ditambahkan pada jadwal hari ini.\n", jeda);
-    return 1;
+    // Informasi halaman
+    printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
 }
