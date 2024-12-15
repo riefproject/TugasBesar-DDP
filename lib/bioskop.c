@@ -38,6 +38,7 @@ const char *getBioskopKota(const Bioskop *bioskop)
     temp[strcspn(temp, "\n")] = 0;
     return temp;
 }
+
 // ================================== Setter ================================== //
 
 void setBioskopId(Bioskop *bioskop, int id)
@@ -115,24 +116,24 @@ int menuBioskop()
         }
         else if (command == 'C' || command == 'c')
         {
-            pointer = 1;
             createBioskopMenu();
             free(bioskops);
             count = loadBioskop(&bioskops);
+            pointer = 1;
         }
         else if (command == 'U' || command == 'u')
         {
-            pointer = 1;
             updateBioskopMenu(bioskops[selection - 1]);
             free(bioskops);
             count = loadBioskop(&bioskops);
+            pointer = 1;
         }
         else if (command == 'D' || command == 'd')
         {
-            pointer = 1;
             deleteBioskop(bioskops[selection - 1]);
             free(bioskops);
             count = loadBioskop(&bioskops);
+            pointer = 1;
         }
         else if (command == 'E' || command == 'e')
         {
@@ -409,6 +410,35 @@ void updateBioskopMenu(Bioskop bioskop)
 
 // ================================= Action =================================== //
 
+Bioskop *findBioskopById(const int id)
+{
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!file)
+    {
+        return NULL;
+    }
+
+    Bioskop *bioskop = malloc(sizeof(Bioskop));
+    if (!bioskop)
+    {
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, "%d", &bioskop->id) == 1)
+    {
+        if (bioskop->id == id)
+        {
+            fclose(file);
+            return bioskop;
+        }
+    }
+
+    fclose(file);
+    free(bioskop);
+    return NULL;
+}
+
 Bioskop *findBioskopByNama(const char *nama)
 {
     FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
@@ -436,6 +466,40 @@ Bioskop *findBioskopByNama(const char *nama)
     fclose(file);
     free(bioskop);
     return NULL;
+}
+
+Bioskop *findBioskopByManagerId(int manager_id)
+{
+    FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return NULL;
+    }
+
+    Bioskop *bioskop = malloc(sizeof(Bioskop));
+
+    int i = 0;
+
+    // Membaca semua data dari file dan memfilter berdasarkan manager_id
+    while (fscanf(file, BIOSKOP_GETTER_FORMAT,
+                  &bioskop->id,
+                  &bioskop->kota_id,
+                  bioskop->nama,
+                  &bioskop->manager_id,
+                  bioskop->alamat) != EOF)
+    {
+
+        if (bioskop->manager_id == manager_id)
+        {
+            break;
+        }
+        i++;
+    }
+
+    fclose(file);
+
+    return bioskop;
 }
 
 Bioskop *createBioskop(const char *nama, const char *alamat, const int kota_id, const int manager_id)

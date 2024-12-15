@@ -8,16 +8,15 @@
 #define MAX_FILM 100
 #define FILM_SETTER_FORMAT "%d,%d,%s,%s,%s,%d,%d\n"
 #define FILM_GETTER_FORMAT "%d,%d,%[^,],%[^,],%[^,],%d,%d\n"
-#define FILM_DATABASE_NAME "db/films.csv" // Update this to reflect the correct film database
-
+#define FILM_DATABASE_NAME "db/film.csv"
 typedef struct
 {
     int id;
-    int bioskop_id; 
+    int bioskop_id;
     char kode_film[10];
     char judul[MAX_FILM_TITLE];
     char genre[MAX_GENRE];
-    int durasi;  
+    int durasi;
     int tersedia;
 } Film;
 
@@ -51,8 +50,8 @@ void updateFilmMenu(Film film);
 // ================================== Action ================================== //
 
 Film *findFilmByKode(const char *kode_film);
-Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id);
-Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id);
+Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
+Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia);
 int deleteFilm(Film film);
 
 // ================================== Utils ================================== //

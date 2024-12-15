@@ -19,7 +19,7 @@ set(SOURCES
     lib/auth.c
     lib/bioskop.c
     lib/db.c
-    # lib/film.c
+    lib/film.c
     # lib/jadwal.c
     lib/kota.c
     lib/menu.c

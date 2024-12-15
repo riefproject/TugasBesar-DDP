@@ -1,22 +1,54 @@
 #ifndef STUDIO_H
 #define STUDIO_H
 
-#include "bioskop.h"
+#define MAX_STUDIO_NAME 100
+#define STUDIO_SETTER_FORMAT "%d,%s,%d,%d,%f\n"
+#define STUDIO_GETTER_FORMAT "%d,%[^,],%d,%d,%f\n"
+#define STUDIO_DATABASE_NAME "db/studio.csv"
 
-#define MAX_STUDIO 100
-#define STUDIO_CSV_FILE "db/studio.csv"
-#define TEMP_STUDIO_FILE "temp_studio.csv"
-#define STUDIO_SETTER_FORMAT "%d,%d,%d,%f\n"
-#define STUDIO_GETTER_FORMAT "%d,%d,%d,%f\n"
-#define STUDIO_DATABASE_NAME "db/users.csv"
+// ================================== type definition ================================== //
 
 typedef struct
 {
     int id;
+    char nama[MAX_STUDIO_NAME];
     int bioskop_id; // Foreign key ke tabel Bioskop
     int jumlah_kursi;
-    float additional_fee;
+    float additionalFee;
 } Studio;
 
+// ================================== setter ================================== //
+
+void setNamaStudio(Studio *studio, const char *nama);
+void setStudioBioskopId(Studio *studio, int bioskop_id);
+void setJumlahKursi(Studio *studio, int jumlah_kursi);
+void setHarga(Studio *studio, float additionalFee);
+
+// ================================== getter ================================== //
+
+const char *getNamaStudio(const Studio *studio);
+int getStudioBioskopId(const Studio *studio);
+int getJumlahKursi(const Studio *studio);
+float getHarga(const Studio *studio);
+
+// ================================== Main Menu ================================ //
+
+int menuStudio();
+void createStudioMenu();
+void updateStudioMenu(Studio studio);
+
+// ================================== Action ================================== //
+
+Studio *findStudioById(int id);
+Studio *createStudio(const char *nama, int jumlah_kursi, float additionalFee);
+Studio *updateStudio(const int id, const char *nama, int jumlah_kursi, float additionalFee);
+int deleteStudio(Studio studio);
+
+// ================================== Utils ================================== //
+
+int countStudioData();
+int loadStudio(Studio **studios);
+int filterStudioByBioskop(Studio **studios, int bioskop_id);
+void printStudioTable(Studio *studios, int count, int page, int perPage, int selection);
 
 #endif

@@ -4,8 +4,7 @@
 #include <conio.h>
 #include <unistd.h>
 
-// #include "menu.h"
-#include "studio.h"
+#include "all.h"
 
 int main()
 {
@@ -48,10 +47,23 @@ int main()
 
     // createBioskopMenu();
 
-    menu();
-    
+    // clearSession();
+
+    // loginUser();
+
+    // createKotaMenu();
+
+    // createBioskopMenu();
+
+    // clearSession();
+
+    // loginUser();
+
+    // menuStudio();
+
+    menuFilm();
+
     // handleMenu();
 
     return 0;
 }
-cxxcd

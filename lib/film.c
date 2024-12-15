@@ -149,6 +149,7 @@ int menuFilm()
 
             free(films);
             count = loadFilm(&films);
+            pointer = 1;
         }
         else if (command == 'U' || command == 'u')
         {
@@ -156,6 +157,7 @@ int menuFilm()
 
             free(films);
             count = loadFilm(&films);
+            pointer = 1;
         }
         else if (command == 'D' || command == 'd')
         {
@@ -163,6 +165,7 @@ int menuFilm()
 
             free(films);
             count = loadFilm(&films);
+            pointer = 1;
         }
         else if (command == 'E' || command == 'e')
         {
@@ -186,7 +189,7 @@ void createFilmMenu()
     printf("====================================================\n" RESET);
 
     char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
-    int durasi, tersedia, bioskop_id;
+    int durasi, tersedia;
 
     while (1)
     {
@@ -224,13 +227,10 @@ void createFilmMenu()
     printf("Masukkan durasi film (menit)\t: ");
     scanf("%d", &durasi);
 
-    printf("Masukkan status ketersediaan (1 untuk tersedia, 0 untuk tidak)\t: ");
+    printf("Masukkan status aktif (1 untuk tersedia, 0 untuk tidak)\t: ");
     scanf("%d", &tersedia);
 
-    printf("Masukkan ID bioskop\t: ");
-    scanf("%d", &bioskop_id);
-
-    Film *newFilm = createFilm(kode_film, judul, genre, durasi, tersedia, bioskop_id);
+    Film *newFilm = createFilm(kode_film, judul, genre, durasi, tersedia);
     if (!newFilm)
     {
         printf(RED BOLD "Gagal menambah film. Harap coba lagi!\n" RESET);
@@ -249,7 +249,7 @@ void updateFilmMenu(Film film)
     printf("====================================================\n" RESET);
 
     char kode_film[10], judul[MAX_FILM_TITLE], genre[MAX_GENRE];
-    int durasi, tersedia, bioskop_id;
+    int durasi, tersedia;
 
     while (1)
     {
@@ -290,10 +290,7 @@ void updateFilmMenu(Film film)
     printf("Masukkan status ketersediaan (1 untuk tersedia, 0 untuk tidak)\t: ");
     scanf("%d", &tersedia);
 
-    printf("Masukkan ID bioskop\t: ");
-    scanf("%d", &bioskop_id);
-
-    Film *updatedFilm = updateFilm(film.id, kode_film, judul, genre, durasi, tersedia, bioskop_id);
+    Film *updatedFilm = updateFilm(film.id, kode_film, judul, genre, durasi, tersedia);
     if (!updatedFilm)
     {
         printf(RED BOLD "Gagal mengubah film. Harap coba lagi!\n" RESET);
@@ -328,7 +325,6 @@ Film *findFilmByKode(const char *kode_film)
         if (film->kode_film == kode_film)
         {
             fclose(file);
-            free(film);
             return film;
         }
     }
@@ -338,7 +334,7 @@ Film *findFilmByKode(const char *kode_film)
     return NULL;
 }
 
-Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id)
+Film *createFilm(const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia)
 {
     Film *film = malloc(sizeof(Film));
     if (!film)
@@ -346,6 +342,9 @@ Film *createFilm(const char *kode_film, const char *judul, const char *genre, in
         printf("Alokasi memori gagal, location: createFilm\n");
         return NULL;
     }
+
+    User *user = getCurrentUser();
+    int bioskop_id = findBioskopByManagerId(user->id)->id;
 
     // Set film properties using setters
     setFilmKode(film, kode_film);
@@ -378,7 +377,7 @@ Film *createFilm(const char *kode_film, const char *judul, const char *genre, in
     return film;
 }
 
-Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia, int bioskop_id)
+Film *updateFilm(int id, const char *kode_film, const char *judul, const char *genre, int durasi, int tersedia)
 {
     Film *updatedFilm = malloc(sizeof(Film));
     if (!updatedFilm)
@@ -387,13 +386,12 @@ Film *updateFilm(int id, const char *kode_film, const char *judul, const char *g
         return NULL;
     }
 
-    // Set film properties using setters
+    setFilmId(updatedFilm, id);
     setFilmKode(updatedFilm, kode_film);
     setFilmJudul(updatedFilm, judul);
     setFilmGenre(updatedFilm, genre);
     setFilmDurasi(updatedFilm, durasi);
     setFilmTersedia(updatedFilm, tersedia);
-    setFilmBioskopId(updatedFilm, bioskop_id);
 
     FILE *fromFile = fopen(FILM_DATABASE_NAME, "r");
     if (!fromFile)
@@ -423,7 +421,8 @@ Film *updateFilm(int id, const char *kode_film, const char *judul, const char *g
     {
         if (films[i].id == id)
         {
-            setFilmId(updatedFilm, id);
+            setFilmBioskopId(updatedFilm, films[i].bioskop_id);
+
             films[i] = *updatedFilm;
         }
         i++;

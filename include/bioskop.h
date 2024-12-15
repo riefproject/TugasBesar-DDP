@@ -57,7 +57,9 @@ void setBioskopManagerId(Bioskop *bioskop, int manager_id);
 
 // ================================= Action =================================== //
 
+Bioskop *findBioskopById(const int id);
 Bioskop *findBioskopByNama(const char *nama);
+Bioskop *findBioskopByManagerId(int manager_id);
 Bioskop *createBioskop(const char *nama, const char *alamat, int kota_id, int manager_id);
 Bioskop *updateBioskop(int id, const char *nama, const char *alamat, int kota_id, int manager_id);
 int deleteBioskop(Bioskop bioskop);

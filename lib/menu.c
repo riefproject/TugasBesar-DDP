@@ -102,10 +102,6 @@ void superAdminMenu()
         "Kelola Pengguna",
         "Kelola Kota",
         "Kelola Bioskop",
-        "Kelola Studio",
-        "Kelola Film",
-        "Kelola Jadwal",
-        "Kelola Tiket",
         "Laporan Penjualan",
         "Logout",
     };
@@ -119,7 +115,7 @@ void superAdminMenu()
 
     while (1)
     {
-        selection = showMenu(menu, 10, header);
+        selection = showMenu(menu, 5, header);
 
         switch (selection)
         {
@@ -156,6 +152,56 @@ void superAdminMenu()
             // salesReport();
             break;
         case 10:
+            clearSession();
+            printf("Berhasil logout!\n");
+            return;
+        default:
+            printf(RED "Pilihan tidak valid!\n" RESET);
+        }
+    }
+}
+
+void managerMenu()
+{
+    int selection;
+    char *menu[] = {
+        "Kelola Studio",
+        "Kelola Film",
+        "Kelola Jadwal",
+        "Laporan Penjualan",
+        "Logout",
+    };
+
+    char *header[] = {
+        "====================================================\n",
+        "      Selamat datang di Sistem Pemesanan Tiket!      \n",
+        "====================================================\n" RESET,
+        NULL,
+    };
+
+    while (1)
+    {
+        selection = showMenu(menu, 5, header);
+
+        switch (selection)
+        {
+        case 1:
+            printf("Menampilkan Kelola Studio...\n");
+            menuStudio();
+            break;
+        case 2:
+            printf("Menampilkan Kelola Film...\n");
+            menuFilm();
+            break;
+        case 3:
+            printf("Menampilkan Kelola Jadwal...\n");
+            // menuSchedule();
+            break;
+        case 4:
+            printf("Menampilkan Laporan Penjualan...\n");
+            // salesReport();
+            break;
+        case 5:
             clearSession();
             printf("Berhasil logout!\n");
             return;

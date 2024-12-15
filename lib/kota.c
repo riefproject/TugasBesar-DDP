@@ -106,6 +106,7 @@ int menuKota()
 
             free(kotaList);
             count = loadKota(&kotaList);
+            pointer = 1;
         }
         else if (command == 'U' || command == 'u')
         {
@@ -113,6 +114,7 @@ int menuKota()
 
             free(kotaList);
             count = loadKota(&kotaList);
+            pointer = 1;
         }
         else if (command == 'D' || command == 'd')
         {
@@ -120,6 +122,7 @@ int menuKota()
 
             free(kotaList);
             count = loadKota(&kotaList);
+            pointer = 1;
         }
         else if (command == 'E' || command == 'e')
         {
@@ -209,6 +212,7 @@ void updateKotaMenu(Kota kota)
 }
 
 // ================================== Action ================================== //
+
 Kota *findKotaByID(int id)
 {
     FILE *file = fopen(KOTA_DATABASE_NAME, "r");
@@ -238,6 +242,7 @@ Kota *findKotaByID(int id)
     free(kota);
     return NULL;
 }
+
 Kota *findKotaByName(const char *nama)
 {
     FILE *file = fopen(KOTA_DATABASE_NAME, "r");
@@ -536,7 +541,7 @@ void printKotaTable(const Kota *kotaList, int count, int page, int perPage, int 
         // Display selected row with a marker
         if (selection == i + 1)
         {
-            printf("[ * ]| %-*d | %-*s |\n", idWidth, kotaList[i].id, namaWidth, kotaList[i].nama);
+            printf(BLUE BOLD "[ * ]| %-*d | %-*s |\n" RESET, idWidth, kotaList[i].id, namaWidth, kotaList[i].nama);
         }
         else
         {

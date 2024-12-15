@@ -1,353 +1,643 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "studio.h"
+#include <conio.h>
+#include <unistd.h>
+
+#include "display.h"
+#include "menu.h"
+#include "auth.h"
 #include "bioskop.h"
+#include "user.h"
+#include "studio.h"
+#include "db.h"
 
-// Constructor
-Studio createStudio(int id, int bioskop_id, int jumlah_kursi, float additional_fee)
-{
-    Studio studio;
-    studio.id = id;
-    studio.bioskop_id = bioskop_id;
-    studio.jumlah_kursi = jumlah_kursi;
-    studio.additional_fee = additional_fee;
-    return studio;
-}
-
-// Getter
-int getStudioId(const Studio *studio)
-{
-    return studio->id;
-}
-
-int getStudioBioskopId(const Studio *studio)
-{
-    return studio->bioskop_id;
-}
-
-int getStudioJumlahKursi(const Studio *studio)
-{
-    return studio->jumlah_kursi;
-}
-
-float getStudioAdditionalFee(const Studio *studio)
-{
-    return studio->additional_fee;
-}
-
-// Setter
-void setStudioId(Studio *studio, int id)
-{
-    studio->id = id;
-}
+// ================================== setter ================================== //
 
 void setStudioBioskopId(Studio *studio, int bioskop_id)
 {
     studio->bioskop_id = bioskop_id;
 }
 
-void setStudioJumlahKursi(Studio *studio, int jumlah_kursi)
+void setNama(Studio *studio, const char *nama)
+{
+    strncpy(studio->nama, nama, MAX_STUDIO_NAME - 1);
+    studio->nama[MAX_STUDIO_NAME - 1] = '\0'; // Ensures null-termination
+}
+
+void setJumlahKursi(Studio *studio, int jumlah_kursi)
 {
     studio->jumlah_kursi = jumlah_kursi;
 }
 
-void setStudioAdditionalFee(Studio *studio, float additional_fee)
+void setAdditionalFee(Studio *studio, float additionalFee)
 {
-    studio->additional_fee = additional_fee;
+    studio->additionalFee = additionalFee;
 }
 
-int addStudio()
+// ==================================== getter ==================================== //
+
+int getStudioBioskopId(const Studio *studio)
 {
-    FILE *file = fopen(STUDIO_CSV_FILE, "r+"); // Buka file untuk membaca dan menulis
-    if (!file)
+    return studio->bioskop_id;
+}
+
+const char *getNama(const Studio *studio)
+{
+    return studio->nama;
+}
+
+int getJumlahKursi(const Studio *studio)
+{
+    return studio->jumlah_kursi;
+}
+
+float getAdditionalFee(const Studio *studio)
+{
+    return studio->additionalFee;
+}
+
+// ==================================== Main Menu =================================//
+
+int menuStudio()
+{
+    Studio *studios;
+    int count = loadStudio(&studios);
+
+    int page = 1, perPage = 10, selection = 1, pointer = 1;
+    int command;
+
+    while (1)
     {
-        // Jika file tidak ada, buat file baru
-        file = fopen(STUDIO_CSV_FILE, "w+");
-        if (!file)
+        system("cls");
+        selection = (page - 1) * perPage + pointer;
+
+        printf(GREEN "====================================================\n");
+        printf("             Menu Manajemen Studio                  \n");
+        printf("====================================================\n" RESET);
+
+        printStudioTable(studios, count, page, perPage, selection);
+
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
+        printf(GREEN "\n[C]: Create" RESET " | " YELLOW "[U]: Update" RESET " | " RED "[D]: Delete" RESET " | " BG_RED WHITE "[E] Exit" RESET "\n" RESET);
+
+        command = getch();
+
+        if (command == 224)
         {
-            perror("Gagal membuka atau membuat file studio.");
+            command = getch();
+
+            if (command == 77) // Right arrow
+            {
+                pointer = 1;
+                if (page * perPage < count)
+                    page++;
+                else
+                {
+                    printf(BLUE "Sudah di halaman terakhir.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 75) // Left arrow
+            {
+                pointer = 1;
+                if (page > 1)
+                    page--;
+                else
+                {
+                    printf(BLUE "Sudah di halaman pertama.\n");
+                    sleep(1);
+                }
+            }
+            else if (command == 72) // Up arrow
+            {
+                if (pointer > 1)
+                {
+                    pointer--;
+                }
+            }
+            else if (command == 80) // Down arrow
+            {
+                if (pointer < perPage && (page - 1) * perPage + pointer < count)
+                {
+                    pointer++;
+                }
+            }
+        }
+        else if (command == 32)
+        {
+            printf("Data terpilih %d\n", selection);
+            free(studios);
             return 0;
         }
-        // Tulis header ke file baru
-        fprintf(file, "id,bioskop_id,jumlah_kursi,additional_fee\n");
+        else if (command == 'C' || command == 'c')
+        {
+            createStudioMenu();
+
+            free(studios);
+            count = loadStudio(&studios);
+        }
+        else if (command == 'U' || command == 'u')
+        {
+            updateStudioMenu(studios[selection - 1]);
+
+            free(studios);
+            count = loadStudio(&studios);
+        }
+        else if (command == 'D' || command == 'd')
+        {
+            deleteStudio(studios[selection - 1]);
+
+            free(studios);
+            count = loadStudio(&studios);
+        }
+        else if (command == 'E' || command == 'e')
+        {
+            free(studios);
+            return 0;
+        }
+        else
+        {
+            printf(YELLOW BOLD "Perintah tidak ditemukan\n" RESET);
+            sleep(1);
+        }
     }
+}
 
-    char line[256];
-    int id = 0, bioskop_id, jumlah_kursi;
-    float additional_fee;
+void createStudioMenu()
+{
+    system("cls");
 
-    // Skip header
-    fgets(line, sizeof(line), file);
+    printf(GREEN "====================================================\n");
+    printf("                Menu Tambah Studio                  \n");
+    printf("====================================================\n" RESET);
 
-    // Cari ID terakhir
-    while (fgets(line, sizeof(line), file))
+    char nama[MAX_STUDIO_NAME];
+    int jumlah_kursi = 0;
+    float additionalFee = 0.0f;
+
+    while (1)
     {
-        int existingId;
-        sscanf(line, "%d,%*d,%*d,%*f", &existingId);
-        id = existingId; // Simpan ID terakhir
+        printf("Masukkan nama studio\t: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0;
+
+        if (strcmp(nama, "") == 0)
+        {
+            printf(RED BOLD "Nama studio tidak boleh kosong.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
     }
 
-    // Ambil input dari admin
-    printf("Masukkan ID Bioskop: ");
-    scanf("%d", &bioskop_id);
-    printf("Masukkan Jumlah Kursi: ");
-    scanf("%d", &jumlah_kursi);
-    printf("Masukkan Biaya Tambahan: ");
-    scanf("%f", &additional_fee);
+    while (1)
+    {
+        printf("Masukkan jumlah kursi\t: ");
+        scanf("%d", &jumlah_kursi);
 
-    // Tambahkan studio baru
-    id++; // Increment ID terakhir
-    fprintf(file, "%d,%d,%d,%.2f\n", id, bioskop_id, jumlah_kursi, additional_fee);
+        if (jumlah_kursi <= 0)
+        {
+            printf(RED BOLD "Jumlah kursi tidak valid.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    while (1)
+    {
+        printf("Masukkan additionalFee\t: ");
+        scanf("%f", &additionalFee);
+
+        if (additionalFee <= 0)
+        {
+            printf(RED BOLD "AdditionalFee tidak valid.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    Studio *newStudio = createStudio(nama, jumlah_kursi, additionalFee);
+    if (!newStudio)
+    {
+        printf(RED BOLD "Gagal menambah studio. Harap Coba Lagi!\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil menambah studio!.\n" RESET);
+    sleep(2);
+    free(newStudio);
+}
+
+void updateStudioMenu(Studio studio)
+{
+    printf(YELLOW "====================================================\n");
+    printf("                 Menu Edit Studio                   \n");
+    printf("====================================================\n" RESET);
+
+    char nama[MAX_STUDIO_NAME];
+    int jumlah_kursi = 0;
+    float additionalFee = 0.0f;
+
+    while (1)
+    {
+        printf("Masukkan nama studio\t: ");
+        fgets(nama, sizeof(nama), stdin);
+        nama[strcspn(nama, "\n")] = 0;
+
+        if (strcmp(nama, "") == 0)
+        {
+            printf(RED BOLD "Nama studio tidak boleh kosong.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    while (1)
+    {
+        printf("Masukkan jumlah kursi\t: ");
+        scanf("%d", &jumlah_kursi);
+
+        if (jumlah_kursi <= 0)
+        {
+            printf(RED BOLD "Jumlah kursi tidak valid.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    while (1)
+    {
+        printf("Masukkan additionalFee\t: ");
+        scanf("%f", &additionalFee);
+
+        if (additionalFee <= 0)
+        {
+            printf(RED BOLD "AdditionalFee tidak valid.\n" RESET);
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+
+    Studio *updatedStudio = updateStudio(studio.id, nama, jumlah_kursi, additionalFee);
+    if (!updatedStudio)
+    {
+        printf(RED BOLD "Gagal mengubah studio. Harap Coba Lagi!\n" RESET);
+        return;
+    }
+
+    printf(GREEN BOLD "Berhasil mengubah studio!.\n" RESET);
+    sleep(2);
+    free(updatedStudio);
+}
+
+// ==================================== Action ====================================//
+
+Studio *createStudio(const char *nama, int jumlah_kursi, float additionalFee)
+{
+    Studio *studio = malloc(sizeof(Studio));
+    if (!studio)
+    {
+        printf("Alokasi memori gagal, lokasi: createStudio.\n");
+        return NULL;
+    }
+
+    User *user = getCurrentUser();
+
+    int bioskop_id = findBioskopByManagerId(user->id)->id;
+
+    setStudioBioskopId(studio, bioskop_id);
+    setNama(studio, nama);
+    setJumlahKursi(studio, jumlah_kursi);
+    setAdditionalFee(studio, additionalFee);
+
+    FILE *file = fopen(STUDIO_DATABASE_NAME, "a");
+    if (!file)
+    {
+        free(studio);
+        return NULL;
+    }
+
+    int id = getLastAvailableID(STUDIO_DATABASE_NAME);
+    studio->id = id;
+
+    fprintf(file, STUDIO_SETTER_FORMAT,
+            studio->id,
+            getNama(studio),
+            getStudioBioskopId(studio),
+            getJumlahKursi(studio),
+            getAdditionalFee(studio));
 
     fclose(file);
-    printf("Studio berhasil ditambahkan dengan ID %d.\n", id);
+    return studio;
+}
+
+Studio *updateStudio(const int id, const char *nama, int jumlah_kursi, float additionalFee)
+{
+    Studio *updatedStudio = malloc(sizeof(Studio));
+    if (!updatedStudio)
+    {
+        printf("Alokasi memori gagal, lokasi: updateStudio.\n");
+        return NULL;
+    }
+
+    updatedStudio->id = id;
+    setNama(updatedStudio, nama);
+    setJumlahKursi(updatedStudio, jumlah_kursi);
+    setAdditionalFee(updatedStudio, additionalFee);
+
+    FILE *fromFile = fopen(STUDIO_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        free(updatedStudio);
+        return NULL;
+    }
+
+    int count = countStudioData();
+    if (count == -1)
+    {
+        fclose(fromFile);
+        free(updatedStudio);
+        return NULL;
+    }
+
+    Studio studios[count];
+    int i = 0;
+
+    while (fscanf(fromFile, STUDIO_GETTER_FORMAT,
+                  &studios[i].id,
+                  studios[i].nama,
+                  &studios[i].bioskop_id,
+                  &studios[i].jumlah_kursi,
+                  &studios[i].additionalFee) != EOF)
+    {
+        if (studios[i].id == id)
+        {
+            setStudioBioskopId(updatedStudio, studios[i].bioskop_id);
+            studios[i] = *updatedStudio;
+        }
+        i++;
+    }
+    fclose(fromFile);
+
+    FILE *toFile = fopen(STUDIO_DATABASE_NAME, "w");
+    for (i = 0; i < count; i++)
+    {
+        fprintf(toFile, STUDIO_SETTER_FORMAT,
+                studios[i].id,
+                studios[i].nama,
+                studios[i].bioskop_id,
+                studios[i].jumlah_kursi,
+                studios[i].additionalFee);
+    }
+    fclose(toFile);
+
+    return updatedStudio;
+}
+
+int deleteStudio(Studio studio)
+{
+    int len = snprintf(NULL, 0, "Apakah Anda yakin ingin menghapus data studio dengan ID '%d'?\n", studio.id) + 1;
+    char *head = malloc(len);
+    if (!head)
+    {
+        printf(RED "Gagal mengalokasikan memori.\n" RESET);
+        sleep(1);
+
+        return -1;
+    }
+    snprintf(head, len, "Apakah Anda yakin ingin menghapus data studio dengan ID '%d'?\n", studio.id);
+
+    char *menu[] = {
+        "Tidak, Batalkan",
+        "Ya, Hapus",
+    };
+
+    char *header[] = {
+        RED BOLD "====================================================\n",
+        "             Konfirmasi Hapus Studio                \n",
+        "====================================================\n\n" RESET,
+        head,
+        NULL};
+
+    int selection = showMenu(menu, 2, header);
+    free(head);
+
+    if (selection == 1)
+    {
+        return 1;
+    }
+
+    FILE *fromFile = fopen(STUDIO_DATABASE_NAME, "r");
+    if (!fromFile)
+    {
+        printf(RED "Gagal membuka file, lokasi: deleteStudio.\n" RESET);
+        sleep(1);
+        return -1;
+    }
+
+    int count = countStudioData();
+    if (count == -1)
+    {
+        printf(RED "Penghitungan data studio gagal, lokasi: deleteStudio.\n" RESET);
+        fclose(fromFile);
+        return -1;
+    }
+
+    Studio studios[count], temp;
+    int i = 0;
+    while (fscanf(fromFile, STUDIO_GETTER_FORMAT,
+                  &temp.id,
+                  temp.nama,
+                  &temp.bioskop_id,
+                  &temp.jumlah_kursi,
+                  &temp.additionalFee) != EOF)
+    {
+        if (temp.id != studio.id)
+        {
+            studios[i] = temp;
+            i++;
+        }
+    }
+    fclose(fromFile);
+
+    FILE *toFile = fopen(STUDIO_DATABASE_NAME, "w");
+    if (!toFile)
+    {
+        printf(RED "Gagal membuka file untuk ditulis, lokasi: deleteStudio.\n" RESET);
+        return -1;
+    }
+
+    i = 0;
+    while (i < count - 1)
+    {
+        fprintf(toFile, STUDIO_SETTER_FORMAT,
+                studios[i].id,
+                studios[i].nama,
+                studios[i].bioskop_id,
+                studios[i].jumlah_kursi,
+                studios[i].additionalFee);
+        i++;
+    }
+
+    fclose(toFile);
+
     return 1;
 }
 
-void findStudioById(int id)
+// ==================================== Utils ====================================//
+int countStudioData()
 {
-    FILE *file = fopen(STUDIO_CSV_FILE, "r");
+    FILE *file = fopen(STUDIO_DATABASE_NAME, "r");
     if (!file)
     {
-        printf("File studio.csv tidak ditemukan.\n");
-        return;
+        printf("File gagal dibuka.\n");
+        return -1;
     }
 
-    char line[256];
-    // Skip header
-    fgets(line, sizeof(line), file);
+    int count = 0;
+    Studio studio;
 
-    // Cari studio berdasarkan ID
-    while (fgets(line, sizeof(line), file))
+    // Menggunakan format yang sesuai dengan struktur Studio
+    while (fscanf(file, STUDIO_GETTER_FORMAT,
+                  &studio.id,
+                  studio.nama,
+                  &studio.bioskop_id,
+                  &studio.jumlah_kursi,
+                  &studio.additionalFee) != EOF)
     {
-        int existingId, bioskop_id, jumlah_kursi;
-        float additional_fee;
-
-        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskop_id, &jumlah_kursi, &additional_fee);
-
-        if (existingId == id)
-        {
-            printf("Studio ditemukan:\n");
-            printf("ID: %d\n", existingId);
-            printf("Bioskop ID: %d\n", bioskop_id);
-            printf("Jumlah Kursi: %d\n", jumlah_kursi);
-            printf("Biaya Tambahan: %.2f\n", additional_fee);
-            fclose(file);
-            return;
-        }
+        count++;
     }
-
-    printf("Studio dengan ID %d tidak ditemukan.\n", id);
     fclose(file);
+    return count;
 }
 
-void displayStudioFromFile()
+int loadStudio(Studio **studios)
 {
-    FILE *studioFile = fopen(STUDIO_CSV_FILE, "r");
-    FILE *bioskopFile = fopen(BIOSKOP_DATABASE_NAME, "r");
-
-    if (!studioFile)
-    {
-        printf("File studio.csv tidak ditemukan.\n");
-        return;
-    }
-    if (!bioskopFile)
-    {
-        printf("File bioskop.csv tidak ditemukan.\n");
-        fclose(studioFile);
-        return;
-    }
-
-    char studioLine[256], bioskopLine[256];
-    printf("\nDaftar Studio:\n");
-    printf("=====================================================\n");
-    printf("%-5s %-20s %-15s %-15s\n", "ID", "Bioskop", "Jumlah Kursi", "Additional Fee");
-    printf("=====================================================\n");
-
-    // Lewati header bioskop
-    fgets(bioskopLine, sizeof(bioskopLine), bioskopFile);
-
-    // Lewati header studio
-    fgets(studioLine, sizeof(studioLine), studioFile);
-
-    // Tampilkan data studio
-    while (fgets(studioLine, sizeof(studioLine), studioFile))
-    {
-        int id, bioskop_id, jumlah_kursi;
-        float additional_fee;
-        char bioskopNama[MAX_BIOSKOP_NAME] = "Tidak Ditemukan";
-
-        sscanf(studioLine, "%d,%d,%d,%f", &id, &bioskop_id, &jumlah_kursi, &additional_fee);
-
-        // Cari nama bioskop berdasarkan bioskop_id
-        rewind(bioskopFile);                                  // Kembali ke awal file bioskop
-        fgets(bioskopLine, sizeof(bioskopLine), bioskopFile); // Lewati header
-        while (fgets(bioskopLine, sizeof(bioskopLine), bioskopFile))
-        {
-            int existingBioskopId;
-            char namaBioskop[MAX_BIOSKOP_NAME];
-            sscanf(bioskopLine, "%d,%*d,%49[^,],%*s", &existingBioskopId, namaBioskop);
-            if (existingBioskopId == bioskop_id)
-            {
-                strncpy(bioskopNama, namaBioskop, MAX_BIOSKOP_NAME);
-                break;
-            }
-        }
-
-        printf("%-5d %-20s %-15d %-15.2f\n", id, bioskopNama, jumlah_kursi, additional_fee);
-    }
-
-    printf("=====================================================\n");
-
-    fclose(studioFile);
-    fclose(bioskopFile);
-}
-
-int updateStudio()
-{
-    FILE *file = fopen(STUDIO_CSV_FILE, "r");
+    FILE *file = fopen(STUDIO_DATABASE_NAME, "r");
     if (!file)
     {
-        printf("File studio.csv tidak ditemukan.\n");
-        return 0;
+        printf("File gagal dibuka.\n");
+        return -1;
     }
 
-    FILE *tempFile = fopen(TEMP_STUDIO_FILE, "w");
-    if (!tempFile)
+    int count = countStudioData();
+    if (count == -1)
     {
-        perror("Gagal membuat file sementara.");
         fclose(file);
-        return 0;
+        return -1;
     }
 
-    int id;
-    int jumlahKursiBaru;
-    float additionalFeeBaru;
-
-    printf("Masukkan ID Studio yang ingin diperbarui: ");
-    scanf("%d", &id);
-    printf("Masukkan Jumlah Kursi Baru: ");
-    scanf("%d", &jumlahKursiBaru);
-    printf("Masukkan Additional Fee Baru: ");
-    scanf("%f", &additionalFeeBaru);
-
-    char line[256];
-    int found = 0;
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
+    *studios = (Studio *)malloc(count * sizeof(Studio));
+    if (*studios == NULL)
     {
-        int existingId, bioskopId, jumlahKursi;
-        float additionalFee;
-        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskopId, &jumlahKursi, &additionalFee);
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
 
-        if (existingId == id)
+    rewind(file);
+    int i = 0;
+
+    // Membaca data dari file dan menyimpannya ke dalam array studios
+    while (fscanf(file, STUDIO_GETTER_FORMAT,
+                  &(*studios)[i].id,
+                  (*studios)[i].nama,
+                  &(*studios)[i].bioskop_id,
+                  &(*studios)[i].jumlah_kursi,
+                  &(*studios)[i].additionalFee) != EOF)
+    {
+        i++;
+    }
+
+    fclose(file);
+    return count;
+}
+
+void printStudioTable(Studio *studios, int count, int page, int perPage, int selection)
+{
+    int idWidth = 2, namaWidth = 4, jumlahKursiWidth = 12, additionalFeeWidth = 13;
+
+    int start = (page - 1) * perPage;
+    int end = start + perPage;
+    if (end > count)
+        end = count;
+
+    // Hitung panjang kolom terpanjang
+    for (int i = start; i < end; i++)
+    {
+        int idLen = snprintf(NULL, 0, "%d", studios[i].id);
+        if (idLen > idWidth)
+            idWidth = idLen;
+
+        if ((int)strlen(studios[i].nama) > namaWidth)
+            namaWidth = strlen(studios[i].nama);
+
+        int kursiLen = snprintf(NULL, 0, "%d", studios[i].jumlah_kursi);
+        if (kursiLen > jumlahKursiWidth)
+            jumlahKursiWidth = kursiLen;
+
+        int additionalFeeLen = snprintf(NULL, 0, "%f", studios[i].additionalFee);
+        if (additionalFeeLen > additionalFeeWidth)
+            additionalFeeWidth = additionalFeeLen;
+    }
+
+    int tableWidth = snprintf(NULL, 0,
+                              "[ * ]| %-*s | %-*s | %-*s | %-*s |\n",
+                              idWidth, "ID",
+                              namaWidth, "Nama",
+                              jumlahKursiWidth, "Jumlah Kursi",
+                              additionalFeeWidth, "AdditionalFee");
+
+    // Cetak garis atas tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak header tabel
+    printf("[ * ]| %-*s | %-*s | %-*s | %-*s |\n",
+           idWidth, "ID",
+           namaWidth, "Nama",
+           jumlahKursiWidth, "Jumlah Kursi",
+           additionalFeeWidth, "AdditionalFee");
+
+    // Cetak garis bawah header
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak isi tabel
+    for (int i = start; i < end; i++)
+    {
+        // Tampilkan dengan penanda jika dipilih
+        if (selection == i + 1)
         {
-            fprintf(tempFile, "%d,%d,%d,%.2f\n", id, bioskopId, jumlahKursiBaru, additionalFeeBaru);
-            found = 1;
+            printf(BLUE BOLD "[ * ]| %-*d | %-*s | %-*d | %-*.2f |\n" RESET,
+                   idWidth, studios[i].id,
+                   namaWidth, studios[i].nama,
+                   jumlahKursiWidth, studios[i].jumlah_kursi,
+                   additionalFeeWidth, studios[i].additionalFee);
         }
         else
         {
-            fputs(line, tempFile);
+            printf("[   ]| %-*d | %-*s | %-*d | %-*.2f |\n",
+                   idWidth, studios[i].id,
+                   namaWidth, studios[i].nama,
+                   jumlahKursiWidth, studios[i].jumlah_kursi,
+                   additionalFeeWidth, studios[i].additionalFee);
         }
     }
 
-    fclose(file);
-    fclose(tempFile);
+    // Cetak garis bawah tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
 
-    if (found)
-    {
-        remove(STUDIO_CSV_FILE);
-        rename(TEMP_STUDIO_FILE, STUDIO_CSV_FILE);
-        printf("Studio dengan ID %d berhasil diperbarui.\n", id);
-    }
-    else
-    {
-        remove(TEMP_STUDIO_FILE);
-        printf("Studio dengan ID %d tidak ditemukan.\n", id);
-    }
-
-    return found;
-}
-
-int deleteStudio()
-{
-    FILE *file = fopen(STUDIO_CSV_FILE, "r");
-    if (!file)
-    {
-        printf("File studio.csv tidak ditemukan.\n");
-        return 0;
-    }
-
-    FILE *tempFile = fopen(TEMP_STUDIO_FILE, "w");
-    if (!tempFile)
-    {
-        perror("Gagal membuat file sementara.");
-        fclose(file);
-        return 0;
-    }
-
-    int id;
-    printf("Masukkan ID Studio yang ingin dihapus: ");
-    scanf("%d", &id);
-
-    char line[256];
-    int found = 0;
-
-    // Salin header
-    fgets(line, sizeof(line), file);
-    fputs(line, tempFile);
-
-    // Proses baris data
-    while (fgets(line, sizeof(line), file))
-    {
-        int existingId, bioskopId, jumlahKursi;
-        float additionalFee;
-        sscanf(line, "%d,%d,%d,%f", &existingId, &bioskopId, &jumlahKursi, &additionalFee);
-
-        if (existingId == id)
-        {
-            printf("\nApakah Anda yakin ingin menghapus data berikut?\n");
-            printf("ID Studio: %d\nID Bioskop: %d\nJumlah Kursi: %d\nAdditional Fee: %.2f\n",
-                   existingId, bioskopId, jumlahKursi, additionalFee);
-            printf("Ketik 'y' untuk menghapus atau 'n' untuk membatalkan: ");
-            char confirm;
-            scanf(" %c", &confirm);
-
-            if (confirm == 'y' || confirm == 'Y')
-            {
-                printf("Data dengan ID %d berhasil dihapus.\n", id);
-                found = 1; // Jangan salin baris ini ke file temporary
-            }
-            else
-            {
-                printf("Penghapusan dibatalkan.\n");
-                fputs(line, tempFile); // Salin kembali data jika dibatalkan
-            }
-        }
-        else
-        {
-            fputs(line, tempFile);
-        }
-    }
-
-    fclose(file);
-    fclose(tempFile);
-
-    if (found)
-    {
-        remove(STUDIO_CSV_FILE);
-        rename(TEMP_STUDIO_FILE, STUDIO_CSV_FILE);
-    }
-    else
-    {
-        remove(TEMP_STUDIO_FILE);
-        printf("Studio dengan ID %d tidak ditemukan.\n", id);
-    }
-
-    return found;
+    // Informasi halaman
+    printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
 }

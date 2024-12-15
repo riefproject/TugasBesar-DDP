@@ -1,8 +1,6 @@
 #ifndef USER_H
 #define USER_H
 
-// ================================== constant ================================== //
-
 #define MAX_USERNAME 255
 #define MAX_PASSWORD 255
 #define MAX_USER_NAME 255
@@ -11,8 +9,6 @@
 #define USER_SETTER_FORMAT "%d,%s,%s,%s,%s,%s,%d\n"
 #define USER_GETTER_FORMAT "%d,%[^,],%[^,],%[^,],%[^,],%[^,],%d\n"
 #define USER_DATABASE_NAME "db/users.csv"
-
-// ================================== type definition ================================== //
 
 typedef struct User User;
 typedef enum
@@ -51,7 +47,7 @@ const char *getNoTelp(const User *user);
 
 // ================================== Main Menu ================================ //
 
-int menuUser( );
+int menuUser();
 void createUserMenu();
 void updateUserMenu(User user);
 
