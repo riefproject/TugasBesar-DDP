@@ -34,6 +34,9 @@ void createJadwalMenu();
 
 int isValidTime(int hour, int minute);
 int isValidDate(int year, int month, int day);
+int isTimeOverlap(Waktu start1, Waktu end1, Waktu start2, Waktu end2);
+int isStudioFull(int jadwal_id);
+Jadwal *findJadwalById(int jadwal_id);
 Jadwal *cekKonflikJadwalStudio(int studio_id);
 void *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket);
 int deleteJadwal(Jadwal jadwal);
@@ -44,5 +47,6 @@ int countJadwalData();
 int loadJadwal(Jadwal **jadwals);
 int loadJadwalIsHasFilmId(Jadwal **jadwals, int id);
 void printJadwalTable(Jadwal *jadwal, int count, int page, int perPage, int selection);
+void printJadwalTableFull(Jadwal *jadwal, int count, int page, int perPage, int selection);
 
 #endif

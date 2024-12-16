@@ -39,6 +39,7 @@ void setEmail(User *user, const char *email);
 void setNoTelp(User *user, const char *notelp);
 
 // ================================== getter ================================== //
+
 const char *getUsername(const User *user);
 const char *getPassword(const User *user);
 const char *getName(const User *user);

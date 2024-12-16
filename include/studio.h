@@ -40,6 +40,7 @@ void updateStudioMenu(Studio studio);
 // ================================== Action ================================== //
 
 Studio *findStudioById(int id);
+int findStudioCapacityById(int studio_id);
 Studio *createStudio(const char *nama, int jumlah_kursi, int additionalFee);
 Studio *updateStudio(const int id, const char *nama, int jumlah_kursi, int additionalFee);
 int deleteStudio(Studio studio);

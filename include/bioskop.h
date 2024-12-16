@@ -20,21 +20,6 @@ typedef struct
     char alamat[MAX_BIOSKOP_ALAMAT];
 } Bioskop;
 
-typedef struct
-{
-    int id;
-    int kota_id;
-    char kota_nama[MAX_KOTA_NAME];
-    char nama[MAX_BIOSKOP_NAME];
-    int manager_id;
-    char manager_name[MAX_USER_NAME];
-    char alamat[MAX_BIOSKOP_ALAMAT];
-    int jumlahStudio;
-    int jumlahFilm;
-    int jumlahTransaksi;
-    int pendapatan;
-} BioskopFullData;
-
 // ================================== Main Menu =================================== //
 
 int menuBioskop();
@@ -46,7 +31,9 @@ void updateBioskopMenu(Bioskop bioskop);
 int getBioskopId(const Bioskop *bioskop);
 int getBioskopKotaId(const Bioskop *bioskop);
 const char *getBioskopNama(const Bioskop *bioskop);
-int getBioskopManagerId(const Bioskop *bioskop);
+const char *getBioskopManager(const Bioskop *bioskop);
+const char *getBioskopKota(const Bioskop *bioskop);
+
 
 // ================================== Setter ================================== //
 

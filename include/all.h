@@ -13,5 +13,7 @@
 #include "transaksi.h"
 #include "user.h"
 #include "petugas.h"
+#include "manager.h"
+#include "client.h"
 
 #endif

@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "menu.h"
+#include "all.h"
 
 int main()
 {
@@ -69,5 +70,12 @@ int main()
 
     handleMenu();
 
+    // int sold = countTicketsSold(1);
+    // printf("%d", sold);
+
+    // Bioskop *bisokop = findBioskopById(1);
+
+    // printf("%s", bisokop->nama);
+    // printf("%s", bisokop->alamat);
     return 0;
 }

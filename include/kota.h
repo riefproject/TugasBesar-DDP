@@ -1,12 +1,11 @@
 #ifndef KOTA_H
 #define KOTA_H
 
-#define MAX_KOTA_NAME 50
 #define MAX_KOTA 100
-#define TEMP_KOTA_FILE "temp/temp_kota.csv"
 #define KOTA_SETTER_FORMAT "%d,%s\n"
 #define KOTA_GETTER_FORMAT "%d,%[^\n]\n"
 #define KOTA_DATABASE_NAME "db/kota.csv"
+#define MAX_KOTA_NAME 100
 
 typedef struct
 {

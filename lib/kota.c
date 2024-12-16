@@ -222,7 +222,7 @@ Kota *findKotaByID(int id)
         return NULL;
     }
 
-    Kota *kota = malloc(sizeof(Kota)); // Alokasi dinamis memori untuk objek Kota
+    Kota *kota = malloc(sizeof(Kota));
     if (!kota)
     {
         printf("Gagal mengalokasikan memori untuk Kota.\n");
@@ -236,13 +236,13 @@ Kota *findKotaByID(int id)
         if (kota->id == id)
         {
             fclose(file);
-            return kota; // Kembalikan pointer ke Kota
+            return kota; // Kembalikan pointer ke Kota jika ditemukan
         }
     }
 
     // Tidak ditemukan
     fclose(file);
-    free(kota); // Bebaskan memori jika tidak ada kota yang cocok
+    free(kota);
     return NULL;
 }
 

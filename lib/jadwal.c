@@ -11,6 +11,7 @@
 #include "studio.h"
 #include "menu.h"
 #include "db.h"
+#include "transaksi.h"
 
 // ================================== Getter ================================== //
 
@@ -185,6 +186,7 @@ int selectStudioJadwal()
             if (jadwal != NULL)
             {
                 printf("Studio ini sedang memutar film lain dalam ");
+                sleep(2);
                 continue;
             }
 
@@ -419,6 +421,46 @@ void createJadwalMenu()
 }
 
 // ================================= Action =================================== //
+
+Jadwal *findJadwalById(int jadwal_id)
+{
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("Error membuka file jadwal.\n");
+        return NULL;
+    }
+
+    // Alokasi memori untuk hasil pencarian
+    Jadwal *targetJadwal = malloc(sizeof(Jadwal));
+    if (!targetJadwal)
+    {
+        printf("Gagal mengalokasikan memori.\n");
+        fclose(file);
+        return NULL;
+    }
+
+    // Cari jadwal berdasarkan ID
+    while (fscanf(file, JADWAL_GETTER_FORMAT,
+                  &targetJadwal->id, &targetJadwal->studio_id, &targetJadwal->film_id,
+                  &targetJadwal->waktu_awal_tayang.tm_hour, &targetJadwal->waktu_awal_tayang.tm_min,
+                  &targetJadwal->waktu_akhir_tayang.tm_hour, &targetJadwal->waktu_akhir_tayang.tm_min,
+                  &targetJadwal->tersedia_sampai.tm_year, &targetJadwal->tersedia_sampai.tm_mon, &targetJadwal->tersedia_sampai.tm_mday,
+                  &targetJadwal->harga_tiket) == 11)
+    {
+        if (targetJadwal->id == jadwal_id)
+        {
+            fclose(file);
+            return targetJadwal; // Kembalikan hasil jika ditemukan
+        }
+    }
+
+    // Jika tidak ditemukan, bebaskan memori dan kembalikan NULL
+    free(targetJadwal);
+    fclose(file);
+    return NULL;
+}
+
 int isValidTime(int hour, int minute)
 {
     return (hour >= 0 && hour < 24 && minute >= 0 && minute < 60);
@@ -462,6 +504,50 @@ Jadwal *cekKonflikJadwalStudio(int studio_id)
     }
 
     return NULL; // Tidak ada konflik
+}
+
+int isStudioFull(int jadwal_id)
+{
+    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("Error membuka file jadwal.\n");
+        return -1;
+    }
+
+    Jadwal *targetJadwal = findJadwalById(jadwal_id);
+    if (targetJadwal == NULL)
+    {
+        printf("Jadwal ID %d tidak ditemukan.\n", jadwal_id);
+        fclose(file);
+        return -1;
+    }
+
+    // Dapatkan kapasitas studio
+    Studio *std = findStudioById(targetJadwal->studio_id);
+    if (std == NULL)
+    {
+        printf("Studio tidak ditemukan.\n");
+        fclose(file);
+        return -1;
+    }
+
+    int capacity = std->jumlah_kursi;
+    int totalTickets = countTicketsSold(jadwal_id);
+
+    fclose(file);
+
+    // Bandingkan total tiket dengan kapasitas studio
+    if (totalTickets >= capacity)
+    {
+        // printf("Studio penuh! Total tiket terjual: %d / %d\n", totalTickets, capacity);
+        return 1;
+    }
+    else
+    {
+        // printf("Studio masih tersedia. Total tiket terjual: %d / %d\n", totalTickets, capacity);
+        return 0;
+    }
 }
 
 void *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu waktu_akhir_tayang, Waktu tersedia_sampai, int harga_tiket)
@@ -586,7 +672,6 @@ void *createJadwal(int studio_id, int film_id, Waktu waktu_awal_tayang, Waktu wa
     }
 
     fclose(file);
-    return jadwal;
 }
 
 int deleteJadwal(Jadwal jadwal)
@@ -777,60 +862,6 @@ int loadJadwal(Jadwal **jadwals)
     return count;
 }
 
-int loadJadwalIsHasFilmId(Jadwal **jadwals, int id)
-{
-    FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
-    if (!file)
-    {
-        printf("File gagal dibuka.\n");
-        return -1;
-    }
-
-    int count = countJadwalData();
-    if (count <= 0)
-    {
-        fclose(file);
-        return count;
-    }
-
-    *jadwals = (Jadwal *)malloc(count * sizeof(Jadwal));
-    if (*jadwals == NULL)
-    {
-        printf("Gagal mengalokasi memori.\n");
-        fclose(file);
-        return -1;
-    }
-
-    rewind(file);
-    int i = 0;
-
-    Jadwal *temp = malloc(sizeof(Jadwal));
-
-    while (fscanf(file, JADWAL_GETTER_FORMAT,
-                  temp->id,
-                  temp->studio_id,
-                  temp->film_id,
-                  temp->waktu_awal_tayang.tm_hour,
-                  temp->waktu_awal_tayang.tm_min,
-                  temp->waktu_akhir_tayang.tm_hour,
-                  temp->waktu_akhir_tayang.tm_min,
-                  temp->tersedia_sampai.tm_year,
-                  temp->tersedia_sampai.tm_mon,
-                  temp->tersedia_sampai.tm_mday,
-                  temp->harga_tiket) == 11) // Validasi jumlah elemen
-    {
-        if (temp->film_id == id)
-        {
-            jadwals[i] = temp;
-            i++;
-        }
-    }
-    // printf("%d\n", (*jadwals)[0].tersedia_sampai.tm_year);
-    // sleep(10);
-    fclose(file);
-    return count;
-}
-
 void printJadwalTable(Jadwal *jadwal, int count, int page, int perPage, int selection)
 {
     int idWidth = 2, studioWidth = 6, filmWidth = 6;
@@ -911,6 +942,148 @@ void printJadwalTable(Jadwal *jadwal, int count, int page, int perPage, int sele
                    waktuWidth, waktuAkhir,
                    tersediaWidth, tersedia);
         }
+    }
+
+    // Cetak garis bawah tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Informasi halaman
+    printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
+}
+
+void printJadwalTableFull(Jadwal *jadwal, int count, int page, int perPage, int selection)
+{
+    int idWidth = 2, studioWidth = 6, soldWidth = 10, filmWidth = 6;
+    int waktuWidth = 11, tersediaWidth = 18;
+    int bioskopNamaWidth = 14, bioskopAlamatWidth = 20;
+
+    int start = (page - 1) * perPage;
+    int end = start + perPage;
+    if (end > count)
+        end = count;
+
+    // Hitung panjang kolom terpanjang
+    for (int i = start; i < end; i++)
+    {
+        int idLen = snprintf(NULL, 0, "%d", jadwal[i].id);
+        if (idLen > idWidth)
+            idWidth = idLen;
+
+        int studioLen = snprintf(NULL, 0, "%d", jadwal[i].studio_id);
+        if (studioLen > studioWidth)
+            studioWidth = studioLen;
+
+        int soldLen = snprintf(NULL, 0, "%d/%d",
+                               countTicketsSold(jadwal[i].id),
+                               findStudioById(jadwal[i].studio_id)->jumlah_kursi);
+
+        if (soldLen > soldWidth)
+            soldWidth = soldLen;
+
+        int filmLen = snprintf(NULL, 0, "%d", jadwal[i].film_id);
+        if (filmLen > filmWidth)
+            filmWidth = filmLen;
+
+        Bioskop *bioskop = findBioskopById(jadwal[i].studio_id);
+        if (bioskop)
+        {
+            int namaLen = strlen(bioskop->nama);
+            if (namaLen > bioskopNamaWidth)
+                bioskopNamaWidth = namaLen;
+
+            int alamatLen = strlen(bioskop->alamat);
+            if (alamatLen > bioskopAlamatWidth)
+                bioskopAlamatWidth = alamatLen;
+
+            free(bioskop); // Bebaskan memori
+        }
+    }
+
+    // Hitung panjang tabel
+    int tableWidth = 6 + idWidth + 3 + studioWidth + 3 + soldWidth + 3 + filmWidth + 3 +
+                     waktuWidth + 3 + waktuWidth + 3 + tersediaWidth + 3 +
+                     bioskopNamaWidth + 3 + bioskopAlamatWidth + 5;
+
+    // Cetak garis atas tabel
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak header tabel
+    printf("[ * ]| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+           idWidth, "ID",
+           studioWidth, "Studio",
+           soldWidth, "Terjual/Kap.",
+           filmWidth, "Film",
+           waktuWidth, "Waktu Awal",
+           waktuWidth, "Waktu Akhir",
+           tersediaWidth, "Tersedia Sampai",
+           bioskopNamaWidth, "Nama Bioskop",
+           bioskopAlamatWidth, "Alamat Bioskop");
+
+    // Cetak garis bawah header
+    for (int i = 0; i < tableWidth; i++)
+        printf("=");
+    printf("\n");
+
+    // Cetak isi tabel
+    for (int i = start; i < end; i++)
+    {
+        char waktuAwal[20], waktuAkhir[20], tersedia[20];
+        Bioskop *bioskop = findBioskopById(jadwal[i].studio_id);
+        Studio *studio = findStudioById(jadwal[i].studio_id);
+
+        // Format waktu
+        strftime(waktuAwal, sizeof(waktuAwal), "%H:%M", &jadwal[i].waktu_awal_tayang);
+        strftime(waktuAkhir, sizeof(waktuAkhir), "%H:%M", &jadwal[i].waktu_akhir_tayang);
+        snprintf(tersedia, sizeof(tersedia), "%02d-%02d-%d",
+                 jadwal[i].tersedia_sampai.tm_mday,
+                 jadwal[i].tersedia_sampai.tm_mon,
+                 jadwal[i].tersedia_sampai.tm_year);
+
+        // Ambil data studio
+        int ticketsSold = countTicketsSold(jadwal[i].id);
+        int kapasitas = studio ? studio->jumlah_kursi : 0;
+
+        // Ambil data bioskop
+        const char *bioskopNama = bioskop ? bioskop->nama : "Tidak Ditemukan";
+        const char *bioskopAlamat = bioskop ? bioskop->alamat : "Tidak Ditemukan";
+
+        // Tampilkan baris
+        if (selection == i + 1)
+        {
+            printf(BLUE BOLD "[ * ]| %-*d | %-*d | %-*d/%-*d | %-*d | %-*s | %-*s | %-*s | %-*s | %-*s |\n" RESET,
+                   idWidth, jadwal[i].id,
+                   studioWidth, jadwal[i].studio_id,
+                   soldWidth / 2, ticketsSold, soldWidth / 2 + 1, kapasitas,
+                   filmWidth, jadwal[i].film_id,
+                   waktuWidth, waktuAwal,
+                   waktuWidth, waktuAkhir,
+                   tersediaWidth, tersedia,
+                   bioskopNamaWidth, bioskopNama,
+                   bioskopAlamatWidth, bioskopAlamat);
+        }
+        else
+        {
+            printf("[   ]| %-*d | %-*d | %-*d/%-*d | %-*d | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+                   idWidth, jadwal[i].id,
+                   studioWidth, jadwal[i].studio_id,
+                   soldWidth / 2, ticketsSold, soldWidth / 2 + 1, kapasitas,
+                   filmWidth, jadwal[i].film_id,
+                   waktuWidth, waktuAwal,
+                   waktuWidth, waktuAkhir,
+                   tersediaWidth, tersedia,
+                   bioskopNamaWidth, bioskopNama,
+                   bioskopAlamatWidth, bioskopAlamat);
+        }
+
+        // Bebaskan memori
+        if (bioskop)
+            free(bioskop);
+        if (studio)
+            free(studio);
     }
 
     // Cetak garis bawah tabel

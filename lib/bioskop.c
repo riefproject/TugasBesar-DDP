@@ -35,8 +35,6 @@ const char *getBioskopManager(const Bioskop *bioskop)
 const char *getBioskopKota(const Bioskop *bioskop)
 {
     char *temp = findKotaByID(bioskop->kota_id)->nama;
-    printf("%s", temp);
-    sleep(10);
     temp[strcspn(temp, "\n")] = 0;
     return temp;
 }
@@ -410,34 +408,46 @@ void updateBioskopMenu(Bioskop bioskop)
 }
 
 // ================================= Action =================================== //
-
 Bioskop *findBioskopById(const int id)
 {
     FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
     if (!file)
     {
+        printf("Gagal membuka file database bioskop.\n");
         return NULL;
     }
 
-    Bioskop *bioskop = malloc(sizeof(Bioskop));
-    if (!bioskop)
-    {
-        fclose(file);
-        return NULL;
-    }
+    Bioskop *bioskop = NULL;
 
-    while (fscanf(file, "%d", &bioskop->id) == 1)
+    while (1)
     {
-        if (bioskop->id == id)
+        Bioskop temp;
+
+        if (fscanf(file, BIOSKOP_GETTER_FORMAT,
+                   &temp.id,
+                   &temp.kota_id,
+                   temp.nama,
+                   &temp.manager_id,
+                   temp.alamat) != 5)
         {
-            fclose(file);
-            return bioskop;
+            break;
+        }
+
+        if (temp.id == id)
+        {
+            bioskop = malloc(sizeof(Bioskop));
+            if (!bioskop)
+            {
+                printf("Gagal mengalokasikan memori untuk Bioskop.\n");
+                break;
+            }
+            *bioskop = temp;
+            break;
         }
     }
 
     fclose(file);
-    free(bioskop);
-    return NULL;
+    return bioskop;
 }
 
 Bioskop *findBioskopByNama(const char *nama)
@@ -798,12 +808,12 @@ void printBioskopTable(Bioskop *bioskops, int count, int page, int perPage, int 
         if ((int)strlen(bioskops[i].nama) > namaWidth)
             namaWidth = strlen(bioskops[i].nama);
 
-        char *manager = getBioskopManager(&bioskops[i]);
+        const char *manager = getBioskopManager(&bioskops[i]);
 
         if ((int)strlen(manager) > managerWidth)
             managerWidth = strlen(manager);
 
-        char *kota = getBioskopKota(&bioskops[i]);
+        const char *kota = getBioskopKota(&bioskops[i]);
 
         if ((int)strlen(kota) > kotaWidth)
             kotaWidth = strlen(kota);

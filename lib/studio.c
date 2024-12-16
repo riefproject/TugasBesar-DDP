@@ -299,6 +299,64 @@ void updateStudioMenu(Studio studio)
 
 // ==================================== Action ====================================//
 
+Studio *findStudioById(int studio_id)
+{
+    FILE *file = fopen(STUDIO_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("Error membuka file studio.\n");
+        return NULL;
+    }
+
+    Studio *studio = malloc(sizeof(Studio));
+    if (!studio)
+    {
+        printf("Gagal mengalokasikan memori.\n");
+        fclose(file);
+        return NULL;
+    }
+
+    while (fscanf(file, STUDIO_GETTER_FORMAT,
+                  &studio->id, studio->nama, &studio->bioskop_id,
+                  &studio->jumlah_kursi, &studio->additionalFee) == 5)
+    {
+        if (studio->id == studio_id)
+        {
+            fclose(file);
+            return studio;
+        }
+    }
+
+    free(studio);
+    fclose(file);
+    return NULL;
+}
+
+int findStudioCapacityById(int studio_id)
+{
+    FILE *file = fopen(STUDIO_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("Error membuka file studio.\n");
+        return -1;
+    }
+
+    Studio studio;
+    while (fscanf(file, STUDIO_GETTER_FORMAT,
+                  &studio.id, studio.nama, &studio.bioskop_id,
+                  &studio.jumlah_kursi, &studio.additionalFee) == 5)
+    {
+        if (studio.id == studio_id)
+        {
+            fclose(file);
+            return studio.jumlah_kursi; // Kapasitas studio
+        }
+    }
+
+    fclose(file);
+    return -1; // Studio tidak ditemukan
+}
+
 Studio *createStudio(const char *nama, int jumlah_kursi, int additionalFee)
 {
     Studio *studio = malloc(sizeof(Studio));

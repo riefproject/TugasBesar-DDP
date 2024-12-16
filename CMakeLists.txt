@@ -26,7 +26,9 @@ set(SOURCES
     lib/security.c
     lib/studio.c
     lib/user.c
+    lib/client.c
     lib/petugas.c
+    lib/manager.c
     lib/transaksi.c
 )
 

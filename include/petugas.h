@@ -3,9 +3,12 @@
 
 #include "db.h"
 
-void petugasLihatStudio();
-void petugasLihatFilm();
-void petugasLihatJadwal();
+int petugasMenuFilm();
+
+int petugasMenuJadwal();
+
 int petugasTransaksi();
+
+int loadJadwalHariIni(Jadwal **jadwals, int film_id);
 
 #endif

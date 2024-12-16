@@ -732,18 +732,41 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
 
     // Hitung panjang kolom terpanjang
     for (int i = start; i < end; i++)
-    {
+    { // Konversi role ke string
+        const char *roleString;
+        switch (users[i].role)
+        {
+        case 1:
+            roleString = "Manager";
+            break;
+        case 2:
+            roleString = "Petugas";
+            break;
+        case 3:
+            roleString = "Pelanggan";
+            break;
+        default:
+            roleString = "Unknown";
+        }
+
         int idLen = snprintf(NULL, 0, "%d", users[i].id);
         if (idLen > idWidth)
             idWidth = idLen;
+
         if ((int)strlen(users[i].username) > usernameWidth)
             usernameWidth = strlen(users[i].username);
+            
         if ((int)strlen(users[i].name) > nameWidth)
             nameWidth = strlen(users[i].name);
+            
         if ((int)strlen(users[i].email) > emailWidth)
             emailWidth = strlen(users[i].email);
+            
         if ((int)strlen(users[i].notelp) > notelpWidth)
             notelpWidth = strlen(users[i].notelp);
+
+        if ((int)strlen(roleString) > roleWidth)
+            roleWidth = strlen(roleString);
     }
 
     int tableWidth = snprintf(NULL, 0,

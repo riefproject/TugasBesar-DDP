@@ -10,86 +10,18 @@
 #include "jadwal.h"
 #include "auth.h"
 #include "transaksi.h"
-#include "petugas.h"
+#include "client.h"
 
-int petugasMenuFilm()
+int clientMenuTransaksi()
 {
-    Film *films;
-    int count = loadFilm(&films);
+    Transaksi *transaksis;
+    int count = clientLoadTransaksi(&transaksis);
 
-    int page = 1, perPage = 10, selection = 1, pointer = 1;
-    int command;
-
-    while (1)
+    if (count < 0)
     {
-        system("cls");
-        selection = (page - 1) * perPage + pointer;
-
-        printFilmTable(films, count, page, perPage, selection);
-
-        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
-        printf(BG_RED WHITE "[E] Exit" RESET "\n" RESET);
-
-        command = getch();
-
-        if (command == 224)
-        {
-            command = getch();
-
-            if (command == 77)
-            {
-                pointer = 1;
-                if (page * perPage < count)
-                    page++;
-                else
-                {
-                    printf("Sudah di halaman terakhir.\n");
-                    sleep(1);
-                }
-            }
-            else if (command == 75)
-            {
-                pointer = 1;
-                if (page > 1)
-                    page--;
-                else
-                {
-                    printf("Sudah di halaman pertama.\n");
-                    sleep(1);
-                }
-            }
-            else if (command == 72)
-            {
-                if (pointer > 1)
-                {
-                    pointer--;
-                }
-            }
-            else if (command == 80)
-            {
-                if (pointer < perPage && (page - 1) * perPage + pointer < count)
-                {
-                    pointer++;
-                }
-            }
-        }
-        else if (command == 'E' || command == 'e')
-        {
-            free(films);
-            return 0;
-        }
-        else
-        {
-            printf(YELLOW BOLD "Perintah tidak ditemukan\n" RESET);
-            sleep(1);
-        }
+        printf(RED "Gagal memuat data transaksi.\n" RESET);
+        return -1;
     }
-}
-
-int petugasMenuJadwal()
-{
-    Jadwal *jadwals;
-    int count = loadJadwal(&jadwals);
 
     int page = 1, perPage = 10, selection = 1, pointer = 1;
     int command;
@@ -100,12 +32,12 @@ int petugasMenuJadwal()
         selection = (page - 1) * perPage + pointer;
 
         printf(GREEN "====================================================\n");
-        printf("             Menu Management Jadwal                 \n");
+        printf("             Menu Management Transaksi              \n");
         printf("====================================================\n" RESET);
 
-        printJadwalTableFull(jadwals, count, page, perPage, selection);
+        printTransaksiTable(transaksis, count, page, perPage, selection);
 
-        printf("[Arrow >] Next Page | [Arrow <] Previous Page\n");
+        printf("[Arrow >] Next Page | [Arrow <] Previous Page");
         printf(BG_RED WHITE "[E] Exit" RESET "\n" RESET);
 
         command = getch();
@@ -114,36 +46,36 @@ int petugasMenuJadwal()
         {
             command = getch();
 
-            if (command == 77) // Arrow Right -> Next Page
+            if (command == 77) // Arrow Right
             {
                 pointer = 1;
                 if (page * perPage < count)
                     page++;
                 else
                 {
-                    printf(BLUE "Sudah di halaman terakhir.\n");
+                    printf(BLUE "Sudah di halaman terakhir.\n" RESET);
                     sleep(1);
                 }
             }
-            else if (command == 75) // Arrow Left -> Previous Page
+            else if (command == 75) // Arrow Left
             {
                 pointer = 1;
                 if (page > 1)
                     page--;
                 else
                 {
-                    printf(BLUE "Sudah di halaman pertama.\n");
+                    printf(BLUE "Sudah di halaman pertama.\n" RESET);
                     sleep(1);
                 }
             }
-            else if (command == 72) // Arrow Up -> Move up in list
+            else if (command == 72) // Arrow Up
             {
                 if (pointer > 1)
                 {
                     pointer--;
                 }
             }
-            else if (command == 80) // Arrow Down -> Move down in list
+            else if (command == 80) // Arrow Down
             {
                 if (pointer < perPage && (page - 1) * perPage + pointer < count)
                 {
@@ -153,8 +85,8 @@ int petugasMenuJadwal()
         }
         else if (command == 'E' || command == 'e') // Exit
         {
-            printf(YELLOW BOLD "Keluar ...\n" RESET);
-            break;
+            free(transaksis);
+            return 0;
         }
         else
         {
@@ -164,7 +96,7 @@ int petugasMenuJadwal()
     }
 }
 
-int petugasTransaksi()
+int clientTransaksi()
 {
     int filmID = 0;
     Film *films;
@@ -237,7 +169,7 @@ int petugasTransaksi()
         {
             printf(YELLOW BOLD "Keluar ...\n" RESET);
             sleep(2);
-            return;
+            return 0;
         }
         else
         {
@@ -249,7 +181,7 @@ int petugasTransaksi()
     int jadwalID = 0;
     int studioID = 0;
     Jadwal *jadwals;
-    count = loadJadwalHariIni(&jadwals, filmID);
+    count = loadJadwalIsHasFilmId(&jadwals, filmID);
 
     page = 1;
     perPage = 10;
@@ -321,7 +253,7 @@ int petugasTransaksi()
         {
             printf(YELLOW BOLD "Keluar ...\n" RESET);
             sleep(2);
-            return;
+            return 0;
         }
         else
         {
@@ -384,7 +316,7 @@ int petugasTransaksi()
     }
 }
 
-int loadJadwalHariIni(Jadwal **jadwals, int film_id)
+int loadJadwalIsHasFilmId(Jadwal **jadwals, int film_id)
 {
     FILE *file = fopen(JADWAL_DATABASE_NAME, "r");
     if (!file)
@@ -429,9 +361,9 @@ int loadJadwalHariIni(Jadwal **jadwals, int film_id)
                   &temp.harga_tiket) == 11)
     {
         // Sesuaikan tahun dan bulan (data .tm_year dimulai dari 1900, .tm_mon dari 0)
-        if (temp.tersedia_sampai.tm_year == (today->tm_year + 1900) &&
-            temp.tersedia_sampai.tm_mon == (today->tm_mon + 1) &&
-            temp.tersedia_sampai.tm_mday == today->tm_mday &&
+        if (temp.tersedia_sampai.tm_year >= (today->tm_year + 1900) &&
+            temp.tersedia_sampai.tm_mon >= (today->tm_mon + 1) &&
+            temp.tersedia_sampai.tm_mday >= today->tm_mday &&
             temp.film_id == film_id)
         {
             (*jadwals)[i] = temp;
@@ -448,4 +380,52 @@ int loadJadwalHariIni(Jadwal **jadwals, int film_id)
     }
 
     return i;
+}
+
+int clientLoadTransaksi(Transaksi **transaksis)
+{
+    FILE *file = fopen(TRANSAKSI_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int count = countTransaksiData();
+    if (count <= 0)
+    {
+        fclose(file);
+        return count;
+    }
+
+    *transaksis = (Transaksi *)malloc(count * sizeof(Transaksi));
+    if (*transaksis == NULL)
+    {
+        printf("Gagal mengalokasi memori.\n");
+        fclose(file);
+        return -1;
+    }
+
+    Transaksi temp;
+    int i = 0;
+    while (fscanf(file, TRANSAKSI_GETTER_FORMAT,
+                  temp.id,
+                  temp.user_id,
+                  temp.jadwal_id,
+                  temp.harga,
+                  temp.bayar,
+                  temp.kembali,
+                  (int *)temp.jenisPembelian) != EOF)
+    {
+        User *user = getCurrentUser();
+
+        if (temp.user_id == user->id)
+        {
+            (*transaksis)[i] = temp;
+            i++;
+        }
+    }
+
+    fclose(file);
+    return count;
 }

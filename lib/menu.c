@@ -57,7 +57,6 @@ void userMenu()
     char *menu[] = {
         "Tiket ku",
         "Pesan Tiket",
-        "Profil",
         "Logout",
     };
 
@@ -69,21 +68,17 @@ void userMenu()
 
     while (1)
     {
-        selection = showMenu(menu, 4, header);
+        selection = showMenu(menu, 3, header);
 
         switch (selection)
         {
         case 1:
             printf("Menampilkan tiket Anda...\n");
-
+            clientMenuTransaksi();
             break;
         case 2:
             printf("Halaman pemesanan tiket...\n");
-
-            break;
-        case 3:
-            printf("Menampilkan profil...\n");
-
+            clientTransaksi();
             break;
         case 4:
             clearSession();
@@ -131,11 +126,11 @@ void superAdminMenu()
             printf("Menampilkan Kelola Bioskop...\n");
             menuBioskop();
             break;
-        case 8:
+        case 4:
             printf("Menampilkan Laporan Penjualan...\n");
-            // salesReport();
+            menuTransaksi();
             break;
-        case 10:
+        case 5:
             clearSession();
             printf("Berhasil logout!\n");
             return;
@@ -183,7 +178,7 @@ void managerMenu()
             break;
         case 4:
             printf("Menampilkan Laporan Penjualan...\n");
-            // salesReport();
+            managerMenuTransaksi();
             break;
         case 5:
             clearSession();
@@ -199,15 +194,9 @@ void petugasMenu()
 {
     int selection;
     char *menu[] = {
-        "Lihat Studio",
         "Lihat Film",
         "Lihat Jadwal",
-<<<<<<< HEAD
         "Transaksi",
-=======
-        "Transaksi"
->>>>>>> c2d71e003e9e9cb8a98cb2794d88546dc23a81ea
-        "Laporan Penjualan",
         "Logout",
     };
 
@@ -220,31 +209,23 @@ void petugasMenu()
 
     while (1)
     {
-        selection = showMenu(menu, 6, header);
+        selection = showMenu(menu, 4, header);
 
         switch (selection)
         {
         case 1:
-            printf("Menampilkan Kelola Studio...\n");
-            petugasLihatStudio();
+            printf("Menampilkan Kelola Film...\n");
+            petugasMenuFilm();
             break;
         case 2:
-            printf("Menampilkan Kelola Film...\n");
-            petugasLihatFilm();
+            printf("Menampilkan Kelola Jadwal...\n");
+            petugasMenuJadwal();
             break;
         case 3:
-            printf("Menampilkan Kelola Jadwal...\n");
-            petugasLihatJadwal();
-            break;
-        case 4:
             printf("Menampilkan Menu Penjualan...\n");
             petugasTransaksi();
             break;
-        case 5:
-            printf("Menampilkan Laporan Penjualan...\n");
-            // salesReport();
-            break;
-        case 6:
+        case 4:
             clearSession();
             printf("Berhasil logout!\n");
             return;
