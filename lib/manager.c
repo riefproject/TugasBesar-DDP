@@ -105,15 +105,24 @@ int loadTransaksiKota(Transaksi **transaksis)
         return -1;
     }
 
-    int count = countTransaksiData();
-    if (count <= 0)
+    int totalTransaksi = countTransaksiData();
+    if (totalTransaksi <= 0)
     {
         fclose(file);
-        return count;
+        return 0;
     }
 
-    *transaksis = (Transaksi *)malloc(count * sizeof(Transaksi));
-    if (*transaksis == NULL)
+    User *currentUser = getCurrentUser();
+    if (!currentUser)
+    {
+        printf("User saat ini tidak valid.\n");
+        fclose(file);
+        return -1;
+    }
+
+    // Alokasikan memori sementara untuk menyimpan transaksi valid
+    Transaksi *tempTransaksis = (Transaksi *)malloc(totalTransaksi * sizeof(Transaksi));
+    if (tempTransaksis == NULL)
     {
         printf("Gagal mengalokasi memori.\n");
         fclose(file);
@@ -121,43 +130,59 @@ int loadTransaksiKota(Transaksi **transaksis)
     }
 
     Transaksi temp;
-    int i = 0;
+    int validCount = 0;
+
+    // Membaca semua data transaksi
     while (fscanf(file, TRANSAKSI_GETTER_FORMAT,
-                  temp.id,
-                  temp.user_id,
-                  temp.jadwal_id,
-                  temp.harga,
-                  temp.bayar,
-                  temp.kembali,
-                  (int *)temp.jenisPembelian) != EOF)
+                  &temp.id,
+                  &temp.user_id,
+                  &temp.jadwal_id,
+                  &temp.harga,
+                  &temp.bayar,
+                  &temp.kembali,
+                  (int *)&temp.jenisPembelian) != EOF)
     {
         Jadwal *jadwal = findJadwalById(temp.jadwal_id);
-        if (jadwal == NULL)
+        if (!jadwal)
         {
             continue;
         }
 
         Studio *studio = findStudioById(jadwal->studio_id);
-        if (studio == NULL)
+        if (!studio)
         {
             continue;
         }
 
-        Bioskop *bioskop = findStudioById(studio->bioskop_id);
-        if (bioskop == NULL)
+        Bioskop *bioskop = findBioskopById(studio->bioskop_id); // Perbaikan: fungsi `findBioskopById` digunakan.
+        if (!bioskop)
         {
             continue;
         }
 
-        User *user = getCurrentUser();
-
-        if (bioskop->manager_id == user->id)
+        if (bioskop->manager_id == currentUser->id)
         {
-            (*transaksis)[i] = temp;
-            i++;
+            tempTransaksis[validCount++] = temp;
         }
     }
 
     fclose(file);
-    return count;
+
+    if (validCount == 0)
+    {
+        free(tempTransaksis);
+        *transaksis = NULL;
+        return 0;
+    }
+
+    // Realokasi memori untuk jumlah transaksi valid
+    *transaksis = (Transaksi *)realloc(tempTransaksis, validCount * sizeof(Transaksi));
+    if (*transaksis == NULL)
+    {
+        printf("Gagal mengalokasi ulang memori.\n");
+        free(tempTransaksis);
+        return -1;
+    }
+
+    return validCount;
 }

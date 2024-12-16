@@ -85,7 +85,6 @@ int clientMenuTransaksi()
         }
         else if (command == 'E' || command == 'e') // Exit
         {
-            free(transaksis);
             return 0;
         }
         else
@@ -301,7 +300,7 @@ int clientTransaksi()
     sleep(5);
 
     // Buat transaksi baru
-    Transaksi *trans = createTransaksi(getCurrentUser()->id, jadwalID, harga, bayar, OFFLINE);
+    Transaksi *trans = createTransaksi(getCurrentUser()->id, jadwalID, harga, bayar, ONLINE);
 
     if (trans)
     {
@@ -391,14 +390,51 @@ int clientLoadTransaksi(Transaksi **transaksis)
         return -1;
     }
 
-    int count = countTransaksiData();
-    if (count <= 0)
+    int totalTransaksiCount = countTransaksiData();
+    if (totalTransaksiCount <= 0)
     {
         fclose(file);
-        return count;
+        return totalTransaksiCount;
     }
 
-    *transaksis = (Transaksi *)malloc(count * sizeof(Transaksi));
+    // Ambil user saat ini
+    User *currentUser = getCurrentUser();
+    if (!currentUser)
+    {
+        printf("User saat ini tidak valid.\n");
+        fclose(file);
+        return -1;
+    }
+
+    // Hitung jumlah transaksi yang sesuai user_id
+    Transaksi temp;
+    int validTransaksiCount = 0;
+    while (fscanf(file, TRANSAKSI_GETTER_FORMAT,
+                  &temp.id,
+                  &temp.user_id,
+                  &temp.jadwal_id,
+                  &temp.harga,
+                  &temp.bayar,
+                  &temp.kembali,
+                  (int *)&temp.jenisPembelian) != EOF)
+    {
+        if (temp.user_id == currentUser->id)
+        {
+            validTransaksiCount++;
+        }
+    }
+
+    // Reset posisi file pointer untuk membaca ulang
+    rewind(file);
+
+    if (validTransaksiCount == 0)
+    {
+        fclose(file);
+        return 0;
+    }
+
+    // Alokasikan memori untuk transaksi yang valid
+    *transaksis = (Transaksi *)malloc(validTransaksiCount * sizeof(Transaksi));
     if (*transaksis == NULL)
     {
         printf("Gagal mengalokasi memori.\n");
@@ -406,20 +442,18 @@ int clientLoadTransaksi(Transaksi **transaksis)
         return -1;
     }
 
-    Transaksi temp;
+    // Membaca dan menyimpan transaksi yang valid
     int i = 0;
     while (fscanf(file, TRANSAKSI_GETTER_FORMAT,
-                  temp.id,
-                  temp.user_id,
-                  temp.jadwal_id,
-                  temp.harga,
-                  temp.bayar,
-                  temp.kembali,
-                  (int *)temp.jenisPembelian) != EOF)
+                  &temp.id,
+                  &temp.user_id,
+                  &temp.jadwal_id,
+                  &temp.harga,
+                  &temp.bayar,
+                  &temp.kembali,
+                  (int *)&temp.jenisPembelian) != EOF)
     {
-        User *user = getCurrentUser();
-
-        if (temp.user_id == user->id)
+        if (temp.user_id == currentUser->id)
         {
             (*transaksis)[i] = temp;
             i++;
@@ -427,5 +461,5 @@ int clientLoadTransaksi(Transaksi **transaksis)
     }
 
     fclose(file);
-    return count;
+    return validTransaksiCount;
 }

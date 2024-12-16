@@ -96,7 +96,7 @@ END MODUL
 | Deskripsi                | Mengelola pengguna dengan menampilkan, menambahkan, memperbarui, atau menghapus data pengguna. |
 | I.S                      | Data pengguna tersedia dalam database.                                                         |
 | F.S                      | Operasi pada data pengguna selesai dilakukan sesuai pilihan.                                   |
-| Modul yang Dipanggil     | loadUser, filterUserByRole, printUserTable, createUserMenu, updateUserMenu, deleteUser         |
+| Modul yang Dipanggil     | loadUser, loadUserByRole, printUserTable, createUserMenu, updateUserMenu, deleteUser         |
 | Modul Pemanggil          | Menu utama aplikasi.                                                                           |
 | Parameter Input/Keluaran | Tidak ada.                                                                                     |
 
@@ -109,9 +109,9 @@ ALGORITMA
     count <- loadUser(&users);
 
     IF getCurrentUser()->role = MANAGER THEN
-        filterUserByRole(&users, PETUGAS);
+        loadUserByRole(&users, PETUGAS);
     ELSE IF getCurrentUser()->role = PETUGAS THEN
-        filterUserByRole(&users, CLIENT);
+        loadUserByRole(&users, CLIENT);
     ENDIF
 
     page <- 1;
@@ -592,7 +592,7 @@ ALGORITMA
 END MODUL
 ```
 
-| Nama Modul               | filterUserByRole                                                                                                              |
+| Nama Modul               | loadUserByRole                                                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | Deskripsi                | Menyaring data pengguna berdasarkan role tertentu.                                                                            |
 | I.S                      | Data pengguna tersedia di database.                                                                                           |
@@ -602,7 +602,7 @@ END MODUL
 | Parameter Input/Keluaran | Input: users (POINTER TO User ARRAY), role (Role). Output: Jumlah pengguna dengan role tertentu (integer) atau -1 jika gagal. |
 
 ```
-MODUL filterUserByRole (Input: role: Role; Output: users: POINTER TO User ARRAY; result: integer)
+MODUL loadUserByRole (Input: role: Role; Output: users: POINTER TO User ARRAY; result: integer)
 DEKLARASI
     file: FILE POINTER;
     totalCount, validCount, i, j: integer;

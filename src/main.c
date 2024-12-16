@@ -5,77 +5,45 @@
 #include <unistd.h>
 
 #include "menu.h"
-#include "all.h"
+#include "display.h"
 
 int main()
 {
-
     system("cls");
-    // puts(
-    //     "====================================================    \n"
-    //     "    ____  _           _               _                 \n"
-    //     "   | __ )(_) ___  ___| | _____  _ __ | | ___   _        \n"
-    //     "   |  _ \\| |/ _ \\/ __| |/ / _ \\| '_ \\| |/ / | | |   \n"
-    //     "   | |_) | | (_) \\__ \\   < (_) | |_) |   <| |_| |     \n"
-    //     "   |____/|_|\\___/|___/_|\\_\\___/| .__/|_|\\_\\\\__,_| \n"
-    //     "                               |_|                      \n"
-    //     "====================================================    \n"
-    //     "      Selamat datang di Sistem Pemesanan Tiket!         \n");
+    puts(
+        "                                                                                                               \n"
+        "                                                           ____  _           _               _                 \n"
+        "                                                          | __ )(_) ___  ___| | _____  _ __ | | ___   _        \n"
+        "                                                          |  _ \\| |/ _ \\/ __| |/ / _ \\| '_ \\| |/ / | | |   \n"
+        "                                                          | |_) | | (_) \\__ \\   < (_) | |_) |   <| |_| |     \n"
+        "                                                          |____/|_|\\___/|___/_|\\_\\___/| .__/|_|\\_\\\\__,_| \n"
+        "                                                                                      |_|                      \n"
+        "                                                                                                               \n"
+        "                                                             Selamat datang di Sistem Pemesanan Tiket!         \n");
 
-    // const int total = 40;
-    // const char spinner[] = "|/-\\";
-    // int spinner_index = 0;
+    const int total = 40;
+    const char spinner[] = "|/-\\";
+    int spinner_index = 0;
 
-    // for (int i = 0; i <= total; i++)
-    // {
-    //     printf("\r     [");
-    //     for (int j = 0; j < i; j++)
-    //     {
-    //         printf(BLUE BOLD "#");
-    //     }
-    //     for (int j = i; j < total; j++)
-    //     {
-    //         printf(" ");
-    //     }
-    //     printf("] %c", spinner[spinner_index]);
+    for (int i = 0; i <= total; i++)
+    {
+        printf("\r                                                          [");
+        for (int j = 0; j < i; j++)
+        {
+            printf(BLUE BOLD "#");
+        }
+        for (int j = i; j < total; j++)
+        {
+            printf(" ");
+        }
+        printf("] %c", spinner[spinner_index]);
 
-    //     fflush(stdout);
-    //     spinner_index = (spinner_index + 1) % 4;
-    //     usleep(100000);
-    // }
-
-    // printf(RESET);
-
-    // createBioskopMenu();
-
-    // clearSession();
-
-    // loginUser();
-
-    // createKotaMenu();
-
-    // createBioskopMenu();
-
-    // clearSession();
-
-    // loginUser();
-
-    // menuStudio();
-
-    // menuFilm();
-
-    // menuJadwal();
-
-    // menuKota();
+        fflush(stdout);
+        spinner_index = (spinner_index + 1) % 4;
+        usleep(100000);
+    }
 
     handleMenu();
 
-    // int sold = countTicketsSold(1);
-    // printf("%d", sold);
-
-    // Bioskop *bisokop = findBioskopById(1);
-
-    // printf("%s", bisokop->nama);
-    // printf("%s", bisokop->alamat);
     return 0;
 }

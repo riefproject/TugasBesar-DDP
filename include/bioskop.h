@@ -57,6 +57,7 @@ int selectKota();
 int selectManager();
 int countBioskopData();
 int loadBioskop(Bioskop **bioskop);
+int loadBioskopManager(User **users);
 void printBioskopTable(Bioskop *bioskop, int count, int page, int perPage, int selection);
 
 #endif

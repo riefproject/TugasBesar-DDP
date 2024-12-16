@@ -64,7 +64,7 @@ int deleteUser(User user);
 
 int countUserData();
 int loadUser(User **users);
-int filterUserByRole(User **users, Role role);
+int loadUserByRole(User **users, Role role);
 void printUserTable(User *users, int count, int page, int perPage, int selection);
 
 #endif

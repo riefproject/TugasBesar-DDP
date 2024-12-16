@@ -337,7 +337,7 @@ int petugasTransaksi()
         additionalFee = studio->additionalFee;
     }
 
-    int harga = jadwals[selection - 1].harga_tiket + additionalFee;
+    int harga = jadwals[selection - 1].harga_tiket;
     int bayar, kembali;
 
     while (1)

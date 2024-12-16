@@ -80,10 +80,9 @@ void userMenu()
             printf("Halaman pemesanan tiket...\n");
             clientTransaksi();
             break;
-        case 4:
+        case 3:
             clearSession();
             printf("Berhasil logout!\n");
-
             return;
         default:
         }

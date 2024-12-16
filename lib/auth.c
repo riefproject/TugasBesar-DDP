@@ -5,13 +5,14 @@
 #include "user.h"
 #include "db.h"
 #include "security.h"
+#include "display.h"
 
 int authenticateUser(const char *username, const char *password)
 {
     User *user = findUserByUsername(username);
     if (user == NULL)
     {
-        printf("Username tidak ada");
+        printf("Username tidak ada\n");
         return 0;
     }
 
@@ -155,7 +156,8 @@ int loginUser()
         }
     }
 
-    printf("Username atau password salah.\n");
+    printf(RED BOLD"Username atau password salah.\n" RESET);
+    sleep(2);
     return 0;
 }
 

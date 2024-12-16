@@ -231,7 +231,7 @@ int selectManager()
     User *users;
     int count = loadUser(&users);
 
-    count = filterUserByRole(&users, MANAGER);
+    count = loadBioskopManager(&users);
 
     int page = 1, perPage = 10, selection = 1, pointer = 1;
     int command;
@@ -292,7 +292,6 @@ int selectManager()
         else if (command == 13)
         {
             printf("Manager dengan nama" GREEN " %s \n" RESET, users[selection - 1].name);
-            free(users);
             return users[selection - 1].id;
         }
         else
@@ -408,6 +407,7 @@ void updateBioskopMenu(Bioskop bioskop)
 }
 
 // ================================= Action =================================== //
+
 Bioskop *findBioskopById(const int id)
 {
     FILE *file = fopen(BIOSKOP_DATABASE_NAME, "r");
@@ -504,15 +504,14 @@ Bioskop *findBioskopByManagerId(int manager_id)
 
         if (bioskop->manager_id == manager_id)
         {
-            selectedBioskop = bioskop;
-            break;
+            return bioskop;
         }
         i++;
     }
 
     fclose(file);
     free(bioskop);
-    return selectedBioskop;
+    return NULL;
 }
 
 Bioskop *createBioskop(const char *nama, const char *alamat, const int kota_id, const int manager_id)
@@ -871,4 +870,40 @@ void printBioskopTable(Bioskop *bioskops, int count, int page, int perPage, int 
 
     // Informasi halaman
     printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
+}
+
+int loadBioskopManager(User **users)
+{
+    FILE *file = fopen(USER_DATABASE_NAME, "r");
+    if (!file)
+    {
+        printf("File gagal dibuka.\n");
+        return -1;
+    }
+
+    int totalCount = countUserData();
+
+    User temp;
+    int validCount = 0;
+
+    // Membaca semua data dari file
+    while (fscanf(file, USER_GETTER_FORMAT,
+                  &temp.id,
+                  temp.username,
+                  temp.password,
+                  temp.name,
+                  temp.email,
+                  temp.notelp,
+                  &temp.role) != EOF)
+    {
+        Bioskop *bioskop = findBioskopByManagerId(temp.id);
+    
+        if (temp.role == MANAGER && bioskop == NULL)
+        {
+            (*users)[validCount] = temp;
+            validCount++;
+        }
+    }
+
+    return validCount;
 }

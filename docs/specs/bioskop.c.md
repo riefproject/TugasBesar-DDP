@@ -163,7 +163,7 @@ END MODUL
 | Deskripsi                | Menampilkan daftar manajer untuk dipilih pengguna.                       |
 | I.S                      | Data manajer tersedia di database.                                       |
 | F.S                      | Manajer yang dipilih oleh pengguna dikembalikan dalam bentuk ID manajer. |
-| Modul yang Dipanggil     | loadUser, filterUserByRole, printUserTable.                              |
+| Modul yang Dipanggil     | loadUser, loadUserByRole, printUserTable.                              |
 | Modul Pemanggil          | createBioskopMenu, updateBioskopMenu.                                    |
 | Parameter Input/Keluaran | Input: Tidak ada. Output: ID manajer yang dipilih.                       |
 
@@ -174,7 +174,7 @@ DEKLARASI
     count, page, perPage, selection, pointer, command, managerID: integer;
 ALGORITMA
     count <- loadUser(&users);
-    count <- filterUserByRole(&users, MANAGER);
+    count <- loadUserByRole(&users, MANAGER);
     page <- 1; perPage <- 10; pointer <- 1;
 
     WHILE TRUE DO

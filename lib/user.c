@@ -68,12 +68,12 @@ int menuUser()
 
     if (getCurrentUser()->role == MANAGER)
     {
-        filterUserByRole(&users, PETUGAS);
+        loadUserByRole(&users, PETUGAS);
     }
 
     if (getCurrentUser()->role == PETUGAS)
     {
-        filterUserByRole(&users, CLIENT);
+        loadUserByRole(&users, CLIENT);
     }
 
     int page = 1, perPage = 10, selection = 1, pointer = 1;
@@ -247,7 +247,6 @@ void createUserMenu()
     notelp[strcspn(notelp, "\n")] = 0;
 
     int limitRole = 0;
-    printf("Pilih role \n: ");
     while (role < 1 || role > 2)
     {
         printf("=================\n");
@@ -266,6 +265,7 @@ void createUserMenu()
         }
         printf("=================\n");
 
+        printf("Pilih role: \n");
         scanf("%d", &role);
 
         if (role >= limitRole && role <= 2)
@@ -755,13 +755,13 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
 
         if ((int)strlen(users[i].username) > usernameWidth)
             usernameWidth = strlen(users[i].username);
-            
+
         if ((int)strlen(users[i].name) > nameWidth)
             nameWidth = strlen(users[i].name);
-            
+
         if ((int)strlen(users[i].email) > emailWidth)
             emailWidth = strlen(users[i].email);
-            
+
         if ((int)strlen(users[i].notelp) > notelpWidth)
             notelpWidth = strlen(users[i].notelp);
 
@@ -849,7 +849,7 @@ void printUserTable(User *users, int count, int page, int perPage, int selection
     printf("Page %d of %d\n", page, (count + perPage - 1) / perPage);
 }
 
-int filterUserByRole(User **users, Role role)
+int loadUserByRole(User **users, Role role)
 {
     FILE *file = fopen(USER_DATABASE_NAME, "r");
     if (!file)
