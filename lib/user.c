@@ -71,11 +71,6 @@ int menuUser()
         loadUserByRole(&users, PETUGAS);
     }
 
-    if (getCurrentUser()->role == PETUGAS)
-    {
-        loadUserByRole(&users, CLIENT);
-    }
-
     int page = 1, perPage = 10, selection = 1, pointer = 1;
     int command;
 
