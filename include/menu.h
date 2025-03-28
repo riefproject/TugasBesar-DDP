@@ -1,7 +1,7 @@
 #ifndef MENU_H
 #define MENU_H
 
-void gustMenu();
+void menuTransaksi();
 
 void userMenu();
 
@@ -13,6 +13,6 @@ void managerMenu();
 
 void handleMenu();
 
-int showMenu(char *menu[], int menuLength, char **header);
+int showMenu(char* menu[], int menuLength, char** header);
 
 #endif

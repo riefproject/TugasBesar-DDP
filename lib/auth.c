@@ -7,11 +7,9 @@
 #include "security.h"
 #include "display.h"
 
-int authenticateUser(const char *username, const char *password)
-{
-    User *user = findUserByUsername(username);
-    if (user == NULL)
-    {
+int authenticateUser(const char* username, const char* password) {
+    User* user = findUserByUsername(username);
+    if (user == NULL) {
         printf("Username tidak ada\n");
         return 0;
     }
@@ -24,22 +22,19 @@ int authenticateUser(const char *username, const char *password)
     return result;
 }
 
-void registerUser()
-{
+void registerUser() {
     char username[MAX_USERNAME], password[MAX_PASSWORD];
     char confirmPassword[MAX_PASSWORD], name[MAX_USER_NAME];
     char email[MAX_EMAIL], notelp[MAX_NOTELP];
 
-    while (1)
-    {
+    while (1) {
         printf("Masukkan username\t: ");
         fgets(username, sizeof(username), stdin);
         username[strcspn(username, "\n")] = 0;
 
-        User *user = findUserByUsername(username);
+        User* user = findUserByUsername(username);
 
-        if (user != NULL)
-        {
+        if (user != NULL) {
             printf("Username sudah terdaftar. Silakan pilih username lain.\n");
             continue;
         }
@@ -54,8 +49,7 @@ void registerUser()
     fgets(confirmPassword, sizeof(confirmPassword), stdin);
     confirmPassword[strcspn(confirmPassword, "\n")] = 0;
 
-    if (strcmp(password, confirmPassword) != 0)
-    {
+    if (strcmp(password, confirmPassword) != 0) {
         printf("Password tidak cocok. Pendaftaran gagal.\n");
         return;
     }
@@ -72,9 +66,8 @@ void registerUser()
     fgets(notelp, sizeof(notelp), stdin);
     notelp[strcspn(notelp, "\n")] = 0;
 
-    User *newUser = createUser(username, password, name, email, notelp, CLIENT);
-    if (!newUser)
-    {
+    User* newUser = createUser(username, password, name, email, notelp, CLIENT);
+    if (!newUser) {
         printf("Registrasi Gagal. Harap Coba Lagi!\n");
         return;
     }
@@ -83,17 +76,14 @@ void registerUser()
     free(newUser);
 }
 
-User *getCurrentUser()
-{
-    FILE *file = fopen("session.bin", "rb");
-    if (file == NULL)
-    {
+User* getCurrentUser() {
+    FILE* file = fopen("session.bin", "rb");
+    if (file == NULL) {
         return NULL;
     }
 
-    User *sessionUser = (User *)malloc(sizeof(User));
-    if (sessionUser == NULL)
-    {
+    User* sessionUser = (User*)malloc(sizeof(User));
+    if (sessionUser == NULL) {
         fclose(file);
         return NULL;
     }
@@ -101,8 +91,7 @@ User *getCurrentUser()
     size_t readResult = fread(sessionUser, sizeof(User), 1, file);
     fclose(file);
 
-    if (readResult != 1)
-    {
+    if (readResult != 1) {
         free(sessionUser);
         return NULL;
     }
@@ -110,45 +99,37 @@ User *getCurrentUser()
     return sessionUser;
 }
 
-void saveSession(User *user)
-{
-    FILE *file = fopen("session.bin", "wb");
-    if (file != NULL)
-    {
+void saveSession(User* user) {
+    FILE* file = fopen("session.bin", "wb");
+    if (file != NULL) {
         fwrite(user, sizeof(User), 1, file);
         fclose(file);
     }
 }
 
-void clearSession()
-{
+void clearSession() {
     remove("session.bin");
 }
 
-int loginUser()
-{
+int loginUser() {
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
 
     printf("Masukkan username: ");
-    if (fgets(username, sizeof(username), stdin) == NULL)
-    {
+    if (fgets(username, sizeof(username), stdin) == NULL) {
         return 0;
     }
     username[strcspn(username, "\n")] = 0;
 
     printf("Masukkan password: ");
-    if (fgets(password, sizeof(password), stdin) == NULL)
-    {
+    if (fgets(password, sizeof(password), stdin) == NULL) {
         return 0;
     }
     password[strcspn(password, "\n")] = 0;
 
-    if (authenticateUser(username, password))
-    {
-        User *foundUser = findUserByUsername(username);
-        if (foundUser != NULL)
-        {
+    if (authenticateUser(username, password)) {
+        User* foundUser = findUserByUsername(username);
+        if (foundUser != NULL) {
             saveSession(foundUser);
             free(foundUser);
             printf("Login berhasil!\n");
@@ -157,15 +138,12 @@ int loginUser()
     }
 
     printf(RED BOLD"Username atau password salah.\n" RESET);
-    sleep(2);
     return 0;
 }
 
-int isLogin()
-{
-    FILE *file = fopen("session.bin", "rb");
-    if (file == NULL)
-    {
+int isLogin() {
+    FILE* file = fopen("session.bin", "rb");
+    if (file == NULL) {
         return 0;
     }
 

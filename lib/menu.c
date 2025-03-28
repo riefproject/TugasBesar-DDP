@@ -3,75 +3,68 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include "client.h" 
+#include "transaksi.h" 
+#include "manager.h"
 #include "all.h"
 
 // ================================== core ================================== //
 
-void guestMenu()
-{
+void guestMenu() {
     int selection;
 
-    char *menu[] = {
+    char* menu[] = {
         "Login",
         "Register",
         "Keluar",
     };
 
-    char *header[] = {
+    char* header[] = {
         GREEN "====================================================\n",
         "      Selamat datang di Sistem Pemesanan Tiket!     \n",
         "====================================================\n" RESET,
         NULL,
     };
 
-    while (1)
-    {
+    while (1) {
         selection = showMenu(menu, 3, header);
 
-        if (selection == 1)
-        {
+        if (selection == 1) {
             loginUser();
         }
-        else if (selection == 2)
-        {
+        else if (selection == 2) {
             registerUser();
         }
-        else if (selection == 3)
-        {
+        else if (selection == 3) {
             printf("Terima kasih telah menggunakan aplikasi ini!\n");
             exit(0);
         }
 
-        if (isLogin())
-        {
+        if (isLogin()) {
             break;
         }
     }
 }
 
-void userMenu()
-{
+void userMenu() {
     int selection;
 
-    char *menu[] = {
+    char* menu[] = {
         "Tiket ku",
         "Pesan Tiket",
         "Logout",
     };
 
-    char *header[] = {
+    char* header[] = {
         "====================================================\n",
         BOLD BLUE "      Selamat datang di Sistem Pemesanan Tiket!     \n" RESET,
         "====================================================\n",
-        NULL};
+        NULL };
 
-    while (1)
-    {
+    while (1) {
         selection = showMenu(menu, 3, header);
 
-        switch (selection)
-        {
+        switch (selection) {
         case 1:
             printf("Menampilkan tiket Anda...\n");
             clientMenuTransaksi();
@@ -89,10 +82,9 @@ void userMenu()
     }
 }
 
-void superAdminMenu()
-{
+void superAdminMenu() {
     int selection;
-    char *menu[] = {
+    char* menu[] = {
         "Kelola Pengguna",
         "Kelola Kota",
         "Kelola Bioskop",
@@ -100,19 +92,17 @@ void superAdminMenu()
         "Logout",
     };
 
-    char *header[] = {
+    char* header[] = {
         "====================================================\n",
         "      Selamat datang di Sistem Pemesanan Tiket!      \n",
         "====================================================\n" RESET,
         NULL,
     };
 
-    while (1)
-    {
+    while (1) {
         selection = showMenu(menu, 5, header);
 
-        switch (selection)
-        {
+        switch (selection) {
         case 1:
             printf("Menampilkan Kelola Pengguna...\n");
             menuUser();
@@ -139,10 +129,9 @@ void superAdminMenu()
     }
 }
 
-void managerMenu()
-{
+void managerMenu() {
     int selection;
-    char *menu[] = {
+    char* menu[] = {
         "Kelola Studio",
         "Kelola Film",
         "Kelola Jadwal",
@@ -150,19 +139,17 @@ void managerMenu()
         "Logout",
     };
 
-    char *header[] = {
+    char* header[] = {
         "====================================================\n",
         "      Selamat datang di Sistem Pemesanan Tiket!      \n",
         "====================================================\n" RESET,
         NULL,
     };
 
-    while (1)
-    {
+    while (1) {
         selection = showMenu(menu, 5, header);
 
-        switch (selection)
-        {
+        switch (selection) {
         case 1:
             printf("Menampilkan Kelola Studio...\n");
             menuStudio();
@@ -189,29 +176,26 @@ void managerMenu()
     }
 }
 
-void petugasMenu()
-{
+void petugasMenu() {
     int selection;
-    char *menu[] = {
+    char* menu[] = {
         "Lihat Film",
         "Lihat Jadwal",
         "Transaksi",
         "Logout",
     };
 
-    char *header[] = {
+    char* header[] = {
         "====================================================\n",
         "      Selamat datang di Sistem Pemesanan Tiket!      \n",
         "====================================================\n" RESET,
         NULL,
     };
 
-    while (1)
-    {
+    while (1) {
         selection = showMenu(menu, 4, header);
 
-        switch (selection)
-        {
+        switch (selection) {
         case 1:
             printf("Menampilkan Kelola Film...\n");
             petugasMenuFilm();
@@ -234,59 +218,45 @@ void petugasMenu()
     }
 }
 
-void handleMenu()
-{
-    while (1)
-    {
-        if (!isLogin())
-        {
+void handleMenu() {
+    while (1) {
+        if (!isLogin()) {
             guestMenu();
         }
-        else
-        {
-            User *user = getCurrentUser();
-            if (user->role == SUPER_ADMIN)
-            {
+        else {
+            User* user = getCurrentUser();
+            if (user->role == SUPER_ADMIN) {
                 superAdminMenu();
             }
-            else if (user->role == MANAGER)
-            {
+            else if (user->role == MANAGER) {
                 managerMenu();
             }
-            else if (user->role == PETUGAS)
-            {
+            else if (user->role == PETUGAS) {
                 petugasMenu();
             }
-            else
-            {
+            else {
                 userMenu();
             }
         }
     }
 }
 
-int showMenu(char *menu[], int menuLength, char **header)
-{
+int showMenu(char* menu[], int menuLength, char** header) {
     int key = 0;
     int selected = 0;
 
-    while (1)
-    {
+    while (1) {
         system("cls");
 
-        for (int i = 0; header[i] != NULL; i++)
-        {
+        for (int i = 0; header[i] != NULL; i++) {
             printf("%s", header[i]);
         }
 
-        for (int i = 0; i < menuLength; i++)
-        {
-            if (selected == i)
-            {
+        for (int i = 0; i < menuLength; i++) {
+            if (selected == i) {
                 printf(BLUE BOLD "  -> %s\n" RESET, menu[i]);
             }
-            else
-            {
+            else {
                 printf("     %s\n", menu[i]);
             }
         }
@@ -295,20 +265,16 @@ int showMenu(char *menu[], int menuLength, char **header)
 
         key = getch();
 
-        if (key == 224)
-        {
+        if (key == 224) {
             key = getch();
-            if (key == 72 && selected > 0)
-            {
+            if (key == 72 && selected > 0) {
                 selected--;
             }
-            else if (key == 80 && selected < menuLength - 1)
-            {
+            else if (key == 80 && selected < menuLength - 1) {
                 selected++;
             }
         }
-        else if (key == 13)
-        {
+        else if (key == 13) {
             break;
         }
     }
